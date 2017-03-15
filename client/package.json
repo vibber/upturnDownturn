@@ -1,0 +1,16 @@
+{
+  "name": "Volumetric",
+  "main": "index.html",
+  "chromium-args": "--enable-web-midi --enable-web-audio --allow-file-access-from-files",
+  "webkit": {
+    "plugin": true,
+    "node-remote": ""
+  },
+  "window": {
+    "frame": true,
+    "toolbar": true,
+    "width":500,
+    "height":500,
+    "name": "index"
+  }
+}

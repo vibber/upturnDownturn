@@ -54,6 +54,7 @@ function Song(songName, context) {
         var sources = [];
 
         for (var i = 0; i < this.decodedAudioBuffers.length; i++) {
+
             var sample = this.decodedAudioBuffers[i];
 
             // each sound sample is the  source of a graph
@@ -265,10 +266,10 @@ function Song(songName, context) {
         // If we are here that means there were no track in solo mode
         // Just look if tracks are muted or not
         for (i = 0; i < nbTracks; i++) {
-            if (this.tracks[i].muted) {
+            if (this.tracks[i].muted && this.trackVolumeNodes[i]) {
                 // track is not muted
                 this.trackVolumeNodes[i].gain.value = 0;
-            } else {
+            } else if (this.trackVolumeNodes[i]) {
                 this.trackVolumeNodes[i].gain.value = this.tracks[i].volume;
             }
         }

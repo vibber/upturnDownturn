@@ -4,13 +4,15 @@ body {
 }
 
 #app {
+    position:absolute;
+    top:100px;
     width: 980px;
     margin: auto;
     background: #EEE;
 }
 
 #console {
-    position: fixed;
+    position: absolute;
     top: 0;
     height: 200px;
     width: 302px;
@@ -37,7 +39,7 @@ body {
 }
 
 #masterTools {
-    position: fixed;
+    position: absolute;
     top: 0;
     height: 200px;
     width: 680px;
@@ -215,3 +217,23 @@ output {
     height: 40px;
     font-size: 2em;
 }
+
+/**********************************/
+
+a.enableTrack {
+    background: #ccc;
+    cursor: pointer;
+    border-top: solid 2px #eaeaea;
+    border-left: solid 2px #eaeaea;
+    border-bottom: solid 2px #777;
+    border-right: solid 2px #777;
+    padding: 5px 5px;           
+    }
+
+a.enableTrack.down {
+    background: #bbb;
+    border-top: solid 2px #777;
+    border-left: solid 2px #777;
+    border-bottom:solid 2px  #eaeaea;
+    border-right: solid 2px #eaeaea;
+    }

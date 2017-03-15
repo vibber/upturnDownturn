@@ -361,7 +361,7 @@ function loadSong(songName) {
     currentSong = new Song(songName, context);
 
 
-    var xhr = new XMLHttpRequest();
+    //var xhr = new XMLHttpRequest();
     //xhr.open('GET', songServer + "/" + currentSong.url, true);
 
     //xhr.onload = function (e) {
@@ -402,6 +402,17 @@ function loadSong(songName) {
     //};
     //xhr.send();
 
+    $('a.enableTrack').each(function(){
+        //Mute a lot of the tracks according to button state
+        muteTracksFromSongElementsState(this);
+
+        //then unmute the one track that should be played
+        var combinedTrack = unmuteCombinedTrackFromSongElementsState();  
+
+        //If there is no combined track unmute the individual tracks
+        if (!combinedTrack)
+            unmuteIndividualTracksFromSongElementState();
+    });
 }
 
 function getMousePos(canvas, evt) {
