@@ -27,7 +27,7 @@ var selectionForLoop = {
 
 
 // Sample size in pixels
-var SAMPLE_HEIGHT = 75;
+var SAMPLE_HEIGHT = 30; //75;
 
 // Useful for memorizing when we paused the song
 var lastTime = 0;
@@ -231,7 +231,11 @@ function loadAllSoundSamples() {
     bufferLoader.load();
 }
 
-function drawTrack(decodedBuffer, trackNumber) {
+function drawTrack(decodedBuffer, trackNumber, VisibleIndex) {
+
+    //Added by Vibeke. Some tracks are invisible
+    if (song.instruments[trackNumber].visible == false)
+        return;
 
     console.log("drawTrack : let's draw sample waveform for track No" + trackNumber + " named " +
         currentSong.tracks[trackNumber].name);
@@ -241,7 +245,7 @@ function drawTrack(decodedBuffer, trackNumber) {
 
     waveformDrawer.init(decodedBuffer, View.masterCanvas, '#83E83E');
     var x = 0;
-    var y = trackNumber * SAMPLE_HEIGHT;
+    var y = VisibleIndex * SAMPLE_HEIGHT;
     // First parameter = Y position (top left corner)
     // second = height of the sample drawing
     waveformDrawer.drawWave(y, SAMPLE_HEIGHT);
@@ -249,12 +253,15 @@ function drawTrack(decodedBuffer, trackNumber) {
     View.masterCanvasContext.strokeStyle = "white";
     View.masterCanvasContext.strokeRect(x, y, window.View.masterCanvas.width, SAMPLE_HEIGHT);
 
-    View.masterCanvasContext.font = '14pt Arial';
+    View.masterCanvasContext.font = '10pt Arial';
     View.masterCanvasContext.fillStyle = 'white';
     View.masterCanvasContext.fillText(trackName, x + 10, y + 20);
 }
 
 function finishedLoading(bufferList) {
+    //Added by vib
+    addEventHandlers();
+
     log("Finished loading all tracks, press Start button above!");
 
     // set the decoded buffer in the song object
@@ -376,17 +383,44 @@ function loadSong(songName) {
             // Let's add a new track to the current song for this instrument
             currentSong.addTrack(instrument);
 
-            // Render HTMl
             var span = document.createElement('tr');
+     
+            // Render HTMl
+            /*
             span.innerHTML = '<td class="trackBox" style="height : ' + SAMPLE_HEIGHT + 'px">' +
-                "<progress class='pisteProgress' id='progress" + trackNumber + "' value='0' max='100' style='width : " + SAMPLE_HEIGHT + "px' ></progress>" +
-                instrument.name + '<div style="float : right;">' +
-                "<button class='mute' id='mute" + trackNumber + "' onclick='muteUnmuteTrack(" + trackNumber + ");'><span class='glyphicon glyphicon-volume-up'></span></button> " +
-                "<button class='solo' id='solo" + trackNumber + "' onclick='soloNosoloTrack(" + trackNumber + ");'><img src='../img/earphones.png' /></button></div>" +
-                "<span id='volspan'><input type='range' class = 'volumeSlider custom' id='volume" + trackNumber + "' min='0' max = '100' value='100' oninput='setVolumeOfTrackDependingOnSliderValue(" + trackNumber + ");'/></span><td>";
+                    "<progress class='pisteProgress' id='progress" + trackNumber + "' value='0' max='100' style='width : " + SAMPLE_HEIGHT + "px' ></progress>" +
+                    instrument.name + '<div style="float : right;">' +
+                    "<button class='mute' id='mute" + trackNumber + "' onclick='muteUnmuteTrack(" + trackNumber + ");'><span class='glyphicon glyphicon-volume-up'></span></button> " +
+                    "<button class='solo' id='solo" + trackNumber + "' onclick='soloNosoloTrack(" + trackNumber + ");'><img src='../img/earphones.png' /></button></div>" +
+                    "<span id='volspan'><input type='range' class = 'volumeSlider custom' id='volume" + trackNumber + "' min='0' max = '100' value='100' oninput='setVolumeOfTrackDependingOnSliderValue(" + trackNumber + ");'/></span><td>";
+                        
+            */
 
+            var inner = '<td class="trackBox" style="height : ' + SAMPLE_HEIGHT + 'px">';
+
+            //These are the original elements of the MT5 player
+            inner += "<div class='originalbuttons'><progress class='pisteProgress' id='progress" + trackNumber + "' value='0' max='100' style='width : " + SAMPLE_HEIGHT + "px' ></progress>" +
+                    instrument.name + '<div style="float : right;">' +
+                     "<button class='mute' id='mute" + trackNumber + "' onclick='muteUnmuteTrack(" + trackNumber + ");'><span class='glyphicon glyphicon-volume-up'></span></button> " +
+                    "<button class='solo' id='solo" + trackNumber + "' onclick='soloNosoloTrack(" + trackNumber + ");'><img src='../img/earphones.png' /></button></div>" +
+                    "<span id='volspan'><input type='range' class = 'volumeSlider custom' id='volume" + trackNumber + "' min='0' max = '100' value='100' oninput='setVolumeOfTrackDependingOnSliderValue(" + trackNumber + ");'/></span></div>";
+
+
+            if (specialElements.includes(instrument.name)) {
+                inner += '<a class="enableTrack down" title="' + instrument.name + '">' + instrument.name + '</a>';
+            } else {
+                inner += '<a class="simpleTrackToggle down" title="' + instrument.name + '">' + instrument.name + '</a> ';
+            }
+
+            inner += '</td>';
+
+            span.innerHTML = inner;
+
+            //Added by Vibeke. SOme instruments are invisible
+            if (!instrument.visible) {
+                span.style = "display: none";
+            }
             divTrack.appendChild(span);
-
         });
 
         // Add range listeners, from range-input.js
@@ -402,6 +436,8 @@ function loadSong(songName) {
     //};
     //xhr.send();
 
+
+    //Added by vibeke. 
     $('a.enableTrack').each(function(){
         //Mute a lot of the tracks according to button state
         muteTracksFromSongElementsState(this);

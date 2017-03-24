@@ -1,9 +1,6 @@
 // SETTINGS
 // Everything in this file added by Vibeke Bertelsen
 
-//TODO: when going from 'kicks' to 'kicks&pad', the 'kicks' track is not disabled
-//Also from 'kicks&bass' to 'kicks&toms&bass'
-
 // Tracks are muted and unmuted when the buttons are pressed
 // 'Kicks' is the only element that affects other elements. So if for instance 'kicks' and 'bass'
 // is enabled there will be a combined track called 'kicks&bass' that should be turned on.
@@ -13,16 +10,30 @@
 var songList = ["upturn downturn qual 2"];
 var song = {"id":"upturn downturn qual 2","instruments":[{"name":"FX","sound":"FX.ogg"},{"name":"bass","sound":"bass.ogg"},{"name":"kicks&bass","sound":"kicks&bass.ogg"},{"name":"kicks&lead&bass","sound":"kicks&lead&bass.ogg"},{"name":"kicks&lead&pad&bass","sound":"kicks&lead&pad&bass.ogg"},{"name":"kicks&lead&pad&toms&bass","sound":"kicks&lead&pad&toms&bass.ogg"},{"name":"kicks&lead&pad&toms","sound":"kicks&lead&pad&toms.ogg"},{"name":"kicks&lead&pad","sound":"kicks&lead&pad.ogg"},{"name":"kicks&lead&toms&bass","sound":"kicks&lead&toms&bass.ogg"},{"name":"kicks&lead&toms","sound":"kicks&lead&toms.ogg"},{"name":"kicks&lead","sound":"kicks&lead.ogg"},{"name":"kicks&pad&bass","sound":"kicks&pad&bass.ogg"},{"name":"kicks&pad&toms&bass","sound":"kicks&pad&toms&bass.ogg"},{"name":"kicks&pad&toms","sound":"kicks&pad&toms.ogg"},{"name":"kicks&pad","sound":"kicks&pad.ogg"},{"name":"kicks&toms&bass","sound":"kicks&toms&bass.ogg"},{"name":"kicks&toms","sound":"kicks&toms.ogg"},{"name":"kicks","sound":"kicks.ogg"},{"name":"lead","sound":"lead.ogg"},{"name":"pad","sound":"pad.ogg"},{"name":"shaker echo + clap","sound":"shaker echo + clap.ogg"},{"name":"snare","sound":"snare.ogg"},{"name":"toms","sound":"toms.ogg"},{"name":"woof + clave","sound":"woof + clave.ogg"}]}
 
+//////////////////////////////////////
+
+var hideTracks = true; //Can be turned off for debugging
+
+//These are the names of the special elements that affect multiple tracks
+var specialElements = [ 'bass', 'toms', 'pad', 'kicks', 'lead'];
+
 /////////////////////////////////////
 
 //Add button event handlers
 $(document).ready(function(){
+
+    //Add some data to the 'song' object
+    addVisibleToSongObject();
+
+});
+
+function addEventHandlers() {
 	//Toggle buttons css
     $('a.enableTrack').click(function(){
         $(this).toggleClass("down");
     });
 
-    //Toggle button behaviour
+    //Toggle button behaviour for the elements that affects multiple tracks
     $('a.enableTrack').click(function(){
     	//First mute a lot of the tracks
 		muteTracksFromSongElementsState(this);
@@ -35,7 +46,39 @@ $(document).ready(function(){
         	unmuteIndividualTracksFromSongElementState();
     });
 
-});
+    //Toggle button css
+    $('a.simpleTrackToggle').click(function() {
+    	$(this).toggleClass("down");
+    });
+
+    //A toggle button for a track. Simply mutes/unmutes the track
+    $('a.simpleTrackToggle').click(function() {
+    	elName = $(this).attr('title');
+    	var index = findIndexInInstrumentsArray(elName);
+    	muteUnmuteTrack(index);
+	});    
+}
+
+//Look up a track name in the song.instruments aray and return the index of it
+function findIndexInInstrumentsArray(name) {
+	for(var i = 0; i < song.instruments.length; i++) {
+		if (song.instruments[i].name == name)
+			return i;
+	};
+	return -1;
+}
+
+// "&" in the name of a track means it's a combined track
+// These tracks should not be visible as we want only the individual
+// tracks to be visible
+function addVisibleToSongObject() {
+	song.instruments.forEach( function(instr) {
+		if (hideTracks)
+			instr.visible = instr.name.indexOf("&") == -1 ? true : false;
+		else
+			instr.visible = true;
+	})
+}
 
 function muteTracksFromSongElementsState(button) {
 	var songElements = createSongElementsArray();
@@ -157,14 +200,20 @@ function muteTrack(trackNumber) {
 
     // Track was not muted, let's mute it!
     currentTrack.muted = true;
-    // let's change the button's class
-    m.innerHTML = "<span class='glyphicon glyphicon-volume-off'></span>";
+    
+    if (m != null) {
+	    // let's change the button's class
+    	m.innerHTML = "<span class='glyphicon glyphicon-volume-off'></span>";
+    }
 
     // In all cases we must put the track on "no solo" mode
     currentTrack.solo = false;
     $(s).removeClass("activated");
-    // Let's change the icon
-    s.innerHTML = "<img src='../img/earphones.png' />";
+
+    if (s != null) {
+    	// Let's change the icon
+	    s.innerHTML = "<img src='../img/earphones.png' />";
+    }
 
     // adjust track volumes dependinf on all mute/solo states
     currentSong.setTrackVolumesDependingOnMuteSoloStatus();
@@ -181,13 +230,17 @@ function unmuteTrack(trackNumber) {
 
     // track was muted, let's unmute it!
     currentTrack.muted = false;
-    m.innerHTML = "<span class='glyphicon glyphicon-volume-up'></span>";
+    if (m!=null) {
+	    m.innerHTML = "<span class='glyphicon glyphicon-volume-up'></span>";
+    }
 
     // In all cases we must put the track on "no solo" mode
     currentTrack.solo = false;
     $(s).removeClass("activated");
-    // Let's change the icon
-    s.innerHTML = "<img src='../img/earphones.png' />";
+    if (s != null) {
+	    // Let's change the icon
+    	s.innerHTML = "<img src='../img/earphones.png' />";    	
+    }
 
     // adjust track volumes dependinf on all mute/solo states
     currentSong.setTrackVolumesDependingOnMuteSoloStatus();

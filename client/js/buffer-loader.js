@@ -7,7 +7,7 @@ function BufferLoader(context, urlList, callback, callbackDraw) {
   this.drawSample = callbackDraw;
 }
 
-BufferLoader.prototype.loadBuffer = function (url, index) {
+BufferLoader.prototype.loadBuffer = function (url, index, visibleIndex) {
   // Load buffer asynchronously
   console.log('file : ' + url + "loading and decoding");
 
@@ -34,7 +34,7 @@ BufferLoader.prototype.loadBuffer = function (url, index) {
         loader.bufferList[index] = buffer;
 
         // Let's draw this decoded sample
-        loader.drawSample(buffer, index);
+        loader.drawSample(buffer, index, visibleIndex);
 
         //console.log("In bufferLoader.onload bufferList size is " + loader.bufferList.length + " index =" + index);
         if (++loader.loadCount == loader.urlList.length)
@@ -54,8 +54,10 @@ BufferLoader.prototype.loadBuffer = function (url, index) {
 
       //console.log("loaded " + percent  + "of song " + index);
       var progress = document.querySelector("#progress" + index);
-      progress.value = e.loaded;
-      progress.max = e.total;
+      if (progress != null) {
+        progress.value = e.loaded;
+        progress.max = e.total;        
+      }
     }
   };
 
@@ -73,6 +75,12 @@ BufferLoader.prototype.load = function () {
   clearLog();
   log("Loading tracks... please wait...");
   console.log("BufferLoader.prototype.load urlList size = " + this.urlList.length);
-  for (var i = 0; i < this.urlList.length; ++i)
-    this.loadBuffer(this.urlList[i], i);
+  var visibleIndex = 0;
+  for (var i = 0; i < this.urlList.length; ++i) {
+    //Mod by Vibeke In order to line up the visible waveforms
+    this.loadBuffer(this.urlList[i], i, visibleIndex);
+    console.log("song.instruments", song.instruments, "i",i);
+    if (song.instruments[i].visible)
+      visibleIndex++;
+  }
 };

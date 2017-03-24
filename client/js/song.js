@@ -36,6 +36,8 @@ function Song(songName, context) {
     // Master volume
     this.masterVolumeNode = context.createGain();
     this.trackVolumeNodes = [];
+    this.trackAnalyserNodes = [];
+    this.trackAnalyserData = [];
     this.analyserNode = context.createAnalyser();
     // For saving the mix to a .wav file, it's better to build this node only
     // once and reuse it.
@@ -96,6 +98,8 @@ function Song(songName, context) {
     this.play = function (startTime) {
         this.buildGraph();
 
+        this.analyseTracks();
+
         this.setTrackVolumesDependingOnMuteSoloStatus();
 
         this.elapsedTimeSinceStart = startTime;
@@ -114,6 +118,10 @@ function Song(songName, context) {
             this.toggleRecording();
         }
     };
+
+    this.analyseTracks = function() {
+
+    }
 
     this.stop = function () {
         if (this.paused === true) return; // cannot stop more than once.
