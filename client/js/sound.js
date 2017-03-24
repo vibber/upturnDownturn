@@ -529,6 +529,9 @@ function animateTime() {
                 // draw frequencies that dance with the music
                 drawFrequencies();
 
+                //Use the audio analysers and save data for each track
+                analyseTracks();
+
                 // Draw time bar
                 View.frontCanvasContext.strokeStyle = "white";
                 View.frontCanvasContext.lineWidth = 3;
@@ -603,7 +606,7 @@ function drawFrequencies() {
     View.waveCanvasContext.fillStyle = "rgba(0, 0, 0, 0.05)";
     View.waveCanvasContext.fillRect(0, 0, View.waveCanvas.width, View.waveCanvas.height);
 
-    var freqByteData = new Uint8Array(currentSong.analyserNode.frequencyBinCount);
+    var freqByteData = currentSong.freqByteData;
     currentSong.analyserNode.getByteFrequencyData(freqByteData);
     var nbFreq = freqByteData.length;
 
@@ -652,6 +655,13 @@ function drawFrequencies() {
     View.waveCanvasContext.stroke();
 
     View.waveCanvasContext.restore();
+}
+
+function analyseTracks() {
+    currentSong.trackAnalyserNodes.forEach(function(analyser, i) {
+       analyser.getByteFrequencyData(currentSong.trackAnalyserData[i]);
+    });
+    console.log("fft", currentSong.trackAnalyserData[19]);
 }
 
 function drawSampleImage(imageURL, trackNumber, trackName) {

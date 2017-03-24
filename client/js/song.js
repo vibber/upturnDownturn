@@ -72,14 +72,29 @@ function Song(songName, context) {
             } else {
                 this.trackVolumeNodes[i].gain.value = this.tracks[i].volume;
             }
+
+            //Connect sound sample to analyser
+            this.trackAnalyserNodes[i] = context.createAnalyser();
+            this.trackAnalyserNodes[i].fftSize = 64;
+            sources[i].connect(this.trackAnalyserNodes[i]);
+            
+            //Create data array to hold analysed data
+            this.trackAnalyserData[i] = new Uint8Array(this.trackAnalyserNodes[i].fftSize);
+            
+            //connect analyser to volume node
+            this.trackAnalyserNodes[i].connect(this.trackVolumeNodes[i]);
+
             // Connect the sound sample to its volume node
-            sources[i].connect(this.trackVolumeNodes[i]);
+            //sources[i].connect(this.trackVolumeNodes[i]);
 
             // Connects all track volume nodes a single master volume node
             this.trackVolumeNodes[i].connect(this.masterVolumeNode);
 
             // Connect the master volume to an analyzer
             this.masterVolumeNode.connect(this.analyserNode);
+
+            //Create array to hold analysed data
+            this.freqByteData = new Uint8Array(this.analyserNode.frequencyBinCount);
 
             // Plug a recorder node to the master volume node
             // Connect the master recorder node after the analyzer
