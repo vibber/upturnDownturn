@@ -9,7 +9,6 @@ function BufferLoader(context, urlList, callback, callbackDraw) {
 
 BufferLoader.prototype.loadBuffer = function (url, index, visibleIndex) {
   // Load buffer asynchronously
-  console.log('file : ' + url + "loading and decoding");
 
   var request = new XMLHttpRequest();
   request.open("GET", url, true);
@@ -79,7 +78,6 @@ BufferLoader.prototype.load = function () {
   for (var i = 0; i < this.urlList.length; ++i) {
     //Mod by Vibeke In order to line up the visible waveforms
     this.loadBuffer(this.urlList[i], i, visibleIndex);
-    console.log("song.instruments", song.instruments, "i",i);
     if (song.instruments[i].visible)
       visibleIndex++;
   }

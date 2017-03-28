@@ -1,4 +1,4 @@
-// SETTINGS
+
 // Everything in this file added by Vibeke Bertelsen
 
 // Tracks are muted and unmuted when the buttons are pressed
