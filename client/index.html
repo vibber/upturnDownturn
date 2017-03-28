@@ -6,8 +6,10 @@
         <title>MT5, the HTML5 multitrack player for musicians</title>
         <ascript src="http://cwilso.github.io/AudioContext-MonkeyPatch/AudioContextMonkeyPatch.js"></ascript>
         <script src="js/jquery.min.js"></script>
-        <script src="js/bootstrap.min.js"></script>
         <script src="js/vibmod.js"></script>
+        <script src="js/lib/three.js"></script>
+        <script src="js/lib/controls/TrackballControls.js"></script>
+        <script src="js/scene.js"></script>
         <script src="js/view.js"></script>
         <script src="js/waveformDrawer.js"></script>
         <script src="js/track.js"></script>
@@ -25,7 +27,7 @@
 		<link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
     <body onload="init();">
-      <canvas width="1280" height="720"></canvas>
+      <canvas id="scenecanvas" width="1280" height="720"></canvas>
 
      
 	<div id="app">

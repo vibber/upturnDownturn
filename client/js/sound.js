@@ -52,6 +52,8 @@ window.requestAnimFrame = (function () {
 
 function init() {
 
+    scene.init();
+
     View.init();
 
     // Get handles on buttons
