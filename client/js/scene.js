@@ -1,8 +1,10 @@
 var scene = {};
 
 scene.init = function () {
+    this.faceTextures = {};
 
     //Renderer
+
     this.canvas = document.getElementById("scenecanvas");
     this.renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -21,13 +23,17 @@ scene.init = function () {
 
     //LIGHTS
 
-    this.directionalLight = new THREE.DirectionalLight( 0xffeedd, 1.5 );
+    this.directionalLight = new THREE.DirectionalLight( 0xffeedd, 0.7 );
     this.directionalLight.position.set( 1, 0.5, 1 );
     this.scene.add( this.directionalLight );
 
     this.directionalLight2 = new THREE.DirectionalLight( 0xddddff, 0.5 );
     this.directionalLight2.position.set( -1, 0.5, -1 );
     this.scene.add( this.directionalLight2 );
+
+    this.directionalLight3 = new THREE.DirectionalLight( 0xeeeeff, 0.5 );
+    this.directionalLight3.position.set( 0, 0.5, 1 );
+    this.scene.add( this.directionalLight3 );
 
     //LOAD MESH
 
@@ -72,6 +78,7 @@ scene.init = function () {
 
     this.canvas.addEventListener('meshReady', this.loadFaceTextures.bind(this) );
     this.canvas.addEventListener('faceTexLoaded', this.replaceFaceMaterial.bind(this) );
+    this.canvas.addEventListener('faceMaterialReady', this.addMorphingToMaterial.bind(this) );
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
     //ANIMATE
@@ -86,27 +93,42 @@ scene.loadFaceTextures = function() {
         map: 'model/ryrussell_face_1001.jpg', 
         normalMap: 'model/Michael7_Face_NM_1001.jpg'
     };
-    this.faceTextures = {};
     for (var key in texUrls) {
-        this.texLoader.load(texUrls[key], function(tex) {
-            this.faceTextures[key] = tex;
-            this.canvas.dispatchEvent( new Event('faceTexLoaded'));
-        }.bind(this));
+        this.texLoader.load(texUrls[key], 
+            function(key2, thescene) { 
+                return function(tex) {
+                    thescene.faceTextures[key2] = tex;
+                    console.log("face", thescene.faceTextures)
+                    thescene.canvas.dispatchEvent( new Event('faceTexLoaded'));
+                }
+            }(key, this)
+        );
     }
 }
 
 //Convert the face material to phong
-//Add bump map to face
+//Add normal map to face
+//Note that bump and normal map cannot be used at the same time
 scene.replaceFaceMaterial = function() {
-    if (this.faceTextures.length < 3)
+    console.log("in function");
+    if (Object.keys(this.faceTextures).length < 3)
         return;
+    console.log("doing it")
     this.mesh.material.materials[3] = new THREE.MeshPhongMaterial({ 
-        bumpMap: this.faceTextures.bumpMap,
         map: this.faceTextures.map,
         normalMap: this.faceTextures.normalMap,
         name: "Face",
         shininess: 0
     });
+//  this.mesh.material.needsUpdate = true;
+    this.canvas.dispatchEvent( new Event('faceMaterialReady'));
+}
+
+scene.addMorphingToMaterial = function() {
+    this.mesh.material.materials.forEach(function(mat) {
+        mat.morphTargets = true;
+        mat.needsUpdate = true;
+    })
 }
 
 scene.onWindowResize = function() {
