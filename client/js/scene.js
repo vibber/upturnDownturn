@@ -76,64 +76,45 @@ scene.init = function () {
     this.controls.maxDistance = 400;
     this.controls.dynamicDampingFactor = 0.2;
 
-    //TRANSFORMATIONS
-
-    this.createTransformationObjects();
-
     //EVENT HANDLERS
 
     this.canvas.addEventListener('meshReady', this.loadFaceTextures.bind(this) );
     this.canvas.addEventListener('faceTexLoaded', this.replaceFaceMaterial.bind(this) );
     this.canvas.addEventListener('faceMaterialReady', this.addMorphingToMaterial.bind(this) );
-    window.addEventListener( 'oscMessage', this.applyTransformations.bind(this));
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
-    // OSC
 
-    osc.init();
-
-    //SAVE FILE
+    //READ FILE
 
     this.fs = require("fs");
-    this.record = "off";
     this.transformationData = [];
-    window.addEventListener("keypress", this.handleKeyPress.bind(this));
+    this.dataReady = false;
+    this.dataPointer = 0;
+
+    this.fs.readFile('./data.json.js', function read(err, data) {
+        if (err) {
+            throw err;
+        }
+        this.transformationData = JSON.parse(data);
+        this.dataReady = true;
+    }.bind(this));
 
     //ANIMATE
 
     this.animate();
 }
 
-scene.handleKeyPress = function(e) {
-    if (e.code == "Space" && this.record == "off") {
-        this.record = "on";
-        console.log("recording");
-    }
-    else if (e.code == "Space" && this.record == "on") {
-        this.record = "save";
-        console.log("end recording");
-    }
-}
-
-scene.recordData = function() {
-    if (this.record == "on") {
-        var tmpObj = {}
-        for (var i = 0; i < this.transformations.length; i++) {
-            tmpObj[this.transformations[i].name] = this.transformations[i].value;
-        }
-        this.transformationData.push(tmpObj);
-    } else if (this.record == "save") {
-        var path = global.__dirname + "/data.json.js";
-        console.log(path);
-        this.fs.writeFile(path, JSON.stringify(this.transformationData), function(err) {
-            if(err) {
-                return console.log(err);
-            }
-            console.log("The file was saved!");
-        }); 
-        this.record = "off";
-        this.transformationData = [];
-    }
+scene.applyMovementsFromFile = function() {
+    if (!this.dataReady || this.mesh == undefined)
+        return;
+    var transformation = this.transformationData[this.dataPointer];
+    this.mesh.morphTargetInfluences[2] = transformation.rotXUp;
+    this.mesh.morphTargetInfluences[1] = transformation.rotXDown; 
+    this.mesh.morphTargetInfluences[3] = transformation.rotYLeft;
+    this.mesh.morphTargetInfluences[4] = transformation.rotYRight;
+    this.dataPointer++;
+    if (this.dataPointer == this.transformationData.length)
+        this.dataPointer = 0;
 }
 
 //LOAD TEXTURES
@@ -189,121 +170,12 @@ scene.animate = function() {
     requestAnimationFrame(this.animate.bind(this));
 
     this.controls.update();
-    this.recordData();
+    this.applyMovementsFromFile();
 
     this.renderer.render(this.scene, this.camera);
 }
 
-////////////////////////////////// TRANSFORMATIONS ////////////////////////
-
-scene.transformations = [];
-scene.smoothingFramesFactor = 4; //Number of frames of smoothing of the transformation values
-
-scene.applyTransformations = function(e) {
-    this.transformations.forEach(function(transformation) {
-        //Apply a translated value to the different properties of our mesh
-        //morphs etc.
-        transformation.apply(e.detail.oscBundle, this);
-        //console.log(e.detail.oscBundle);
-    }.bind(this))
-}
-
-//These objects hold the logic that translates the OSC values 
-// to our model coordinate system.
-scene.createTransformationObjects = function() {
-    this.transformations.push({
-        name: "rotXUp",
-        oscMin: 0,
-        oscMax: -0.32,
-        modelMin: 0,
-        modelMax: 1,
-        value: 0,
-        oldValue: 0,
-        apply: function(oscBundle, scene) {
-            this.oldValue = this.value;
-            var rotX = oscBundle.elements[3].args[0].value;
-            if (rotX > this.oscMax && rotX < this.oscMin) {
-                var unSmoothed = scene.translateValue(rotX, this.oscMin, this.oscMax, this.modelMin, this.modelMax);
-            } else {
-                var unSmoothed = 0;
-            }
-            this.value = scene.movingAverageSmoothing(unSmoothed, this.oldValue, scene.smoothingFramesFactor);
-            scene.mesh.morphTargetInfluences[2] = this.value;
-        }
-    });
-
-    this.transformations.push({
-        name: "rotXDown",
-        oscMin: 0,
-        oscMax: 0.32,
-        modelMin: 0,
-        modelMax: 0.5,
-        value: 0,
-        oldValue: 0,
-        apply: function(oscBundle) {
-            this.oldValue = this.value;
-            var rotX = oscBundle.elements[3].args[0].value;
-            if (rotX < this.oscMax && rotX > this.oscMin) {
-                var unSmoothed = scene.translateValue(rotX, this.oscMin, this.oscMax, this.modelMin, this.modelMax);
-            } else {
-                var unSmoothed = 0;
-            }
-            this.value = scene.movingAverageSmoothing(unSmoothed, this.oldValue, scene.smoothingFramesFactor);
-            scene.mesh.morphTargetInfluences[1] = this.value;
-        }
-    });
-
-    this.transformations.push({
-        name: "rotYLeft",
-        oscMin: 0,
-        oscMax: -0.3,
-        modelMin: 0,
-        modelMax: 0.5,
-        value: 0,
-        oldValue: 0,
-        apply: function(oscBundle) {
-            this.oldValue = this.value;
-            var rotY = oscBundle.elements[3].args[1].value;
-            if (rotY > this.oscMax && rotY < this.oscMin) {
-                var unSmoothed = scene.translateValue(rotY, this.oscMin, this.oscMax, this.modelMin, this.modelMax);
-            } else {
-                var unSmoothed = 0;
-            }
-            this.value = scene.movingAverageSmoothing(unSmoothed, this.oldValue, scene.smoothingFramesFactor);
-            scene.mesh.morphTargetInfluences[3] = this.value; 
-        }
-    });
-
-    this.transformations.push({
-        name: "rotYRight",
-        oscMin: 0,
-        oscMax: 0.3,
-        modelMin: 0,
-        modelMax: 0.5,
-        value: 0,
-        oldValue: 0,
-        apply: function(oscBundle) {
-            this.oldValue = this.value;
-            var rotY = oscBundle.elements[3].args[1].value;
-            if (rotY < this.oscMax && rotY > this.oscMin) {
-                var unSmoothed = scene.translateValue(rotY, this.oscMin, this.oscMax, this.modelMin, this.modelMax);
-            } else {
-                var unSmoothed = 0;
-            }
-            this.value = scene.movingAverageSmoothing(unSmoothed, this.oldValue, scene.smoothingFramesFactor);
-            scene.mesh.morphTargetInfluences[4] = this.value;
-        }
-    });                
-}
-
-//http://stackoverflow.com/questions/3760506/smoothing-values-over-time-moving-average-or-something-better
-scene.movingAverageSmoothing = function(newValue, oldValue, numberOfFrames) {
-    workingAverage = oldValue;
-    smoothingFactor = 1/numberOfFrames;
-    workingAverage = (newValue*smoothingFactor) + ( workingAverage * ( 1.0 - smoothingFactor) )
-    return workingAverage;
-}
-
+/*
 scene.translateValue = function(value, sourceMin, sourceMax, destMin, destMax) {
     normValue = this.normalize(value,sourceMin,sourceMax);
     return this.lerp(normValue, destMin, destMax);
@@ -317,34 +189,4 @@ scene.lerp = function(pct, min, max) {
 scene.normalize = function(value, min, max) {
     return Math.abs((value - min) / (max - min));
 }
-
-
-////////////////////////////////// OSC STUFF //////////////////////////////
-
-osc = {};
-osc.inport = 8338;
-
-osc.init = function() {
-    this.osc = require('osc-min');
-    this.udp = require("dgram");
-
-    //Callback gets called everytime a msg is received
-    this.sock = this.udp.createSocket("udp4", function(msg, rinfo) {
-        var error, error1;
-        try {
-            this.parse(msg);
-        } catch (error) {
-            return console.log("Error in osc parsing", error);
-        }
-    }.bind(this));
-
-    this.sock.bind(this.inport);
- }
-
-//This gets called every time there is a new osc message
-osc.parse = function(msg) {
-    var oscBundle = this.osc.fromBuffer(msg);
-    if (faceFound = oscBundle.elements[0].args[0].value) {
-        dispatchEvent( new CustomEvent('oscMessage',{ "detail": {"oscBundle":oscBundle } } ));
-    }
-}
+*/
