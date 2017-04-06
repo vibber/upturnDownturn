@@ -663,7 +663,7 @@ function analyseTracks() {
     currentSong.trackAnalyserNodes.forEach(function(analyser, i) {
        analyser.getByteFrequencyData(currentSong.trackAnalyserData[i]);
     });
-    console.log("fft", currentSong.trackAnalyserData[19]);
+    //console.log("fft", currentSong.trackAnalyserData[19]);
 }
 
 function drawSampleImage(imageURL, trackNumber, trackName) {

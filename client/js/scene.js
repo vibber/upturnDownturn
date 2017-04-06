@@ -4,7 +4,11 @@
 var scene = {};
 
 scene.init = function () {
-    this.faceTextures = {};
+    this.textures = {};
+
+    // Texture scene
+
+    texscene.init();
 
     //Renderer
 
@@ -108,6 +112,7 @@ scene.applyMovementsFromFile = function() {
     if (!this.dataReady || this.mesh == undefined)
         return;
     var transformation = this.transformationData[this.dataPointer];
+    this.mesh.morphTargetInfluences[0] = transformation.eyes;
     this.mesh.morphTargetInfluences[2] = transformation.rotXUp;
     this.mesh.morphTargetInfluences[1] = transformation.rotXDown; 
     this.mesh.morphTargetInfluences[3] = transformation.rotYLeft;
@@ -120,16 +125,17 @@ scene.applyMovementsFromFile = function() {
 //LOAD TEXTURES
 scene.loadFaceTextures = function() {
     var texUrls = { 
-        bumpMap: 'model/ryrussell_faceb_1001.jpg', 
-        map: 'model/ryrussell_face_1001.jpg', 
-        normalMap: 'model/Michael7_Face_NM_1001.jpg'
+        faceMap: 'model/ryrussell_face_1001.jpg',
+        //'img/tex/CGRright_109_normal.jpg'
     };
     for (var key in texUrls) {
         this.texLoader.load(texUrls[key], 
             function(key2, thescene) { 
                 return function(tex) {
-                    thescene.faceTextures[key2] = tex;
-                    console.log("face", thescene.faceTextures)
+                    tex.wrapS = THREE.RepeatWrapping;
+                    tex.wrapT = THREE.RepeatWrapping;
+                    thescene.textures[key2] = tex;
+                    console.log("face", thescene.textures)
                     thescene.canvas.dispatchEvent( new Event('faceTexLoaded'));
                 }
             }(key, this)
@@ -137,19 +143,18 @@ scene.loadFaceTextures = function() {
     }
 }
 
-//Convert the face material to phong
-//Add normal map to face
+//Convert the materials to phong
+//Add normal map to face and torso
 //Note that bump and normal map cannot be used at the same time
 scene.replaceFaceMaterial = function() {
-    if (Object.keys(this.faceTextures).length < 3)
+    if (Object.keys(this.textures).length < 1)
         return;
     this.mesh.material.materials[3] = new THREE.MeshPhongMaterial({ 
-        map: this.faceTextures.map,
-        normalMap: this.faceTextures.normalMap,
+        map: this.textures.faceMap,
+        normalMap: texscene.rendertarget.texture,
         name: "Face",
         shininess: 0
     });
-//  this.mesh.material.needsUpdate = true;
     this.canvas.dispatchEvent( new Event('faceMaterialReady'));
 }
 
@@ -172,7 +177,25 @@ scene.animate = function() {
     this.controls.update();
     this.applyMovementsFromFile();
 
+    texscene.animate();
+
+    scene.animatePad();
+
+    //Apparantly the same renderer needs to be used for the two scenes
+    //It doesn't work when the texscene has it's own renderer
+    this.renderer.render( texscene.scene, texscene.camera, texscene.rendertarget);
     this.renderer.render(this.scene, this.camera);
+}
+
+scene.animatePad = function() {
+    if (currentSong && currentSong.trackAnalyserData[19]) {
+        this.mesh.material.materials[3].shininess = currentSong.trackAnalyserData[19][9] / 255 * 100 * 2;
+        this.mesh.material.materials[3].normalScale.x = currentSong.trackAnalyserData[19][9] / 255 * 4; //Animate the material to the 'pad' track
+        this.mesh.material.materials[3].normalScale.y = this.mesh.material.materials[3].normalScale.x;
+    }  else if (this.mesh && this.mesh.material.materials[3].normalScale) {
+        this.mesh.material.materials[3].normalScale.x = 0; 
+        this.mesh.material.materials[3].normalScale.y = this.mesh.material.materials[3].normalScale.x;
+    }
 }
 
 /*
