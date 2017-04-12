@@ -729,6 +729,8 @@ function playAllTracks(startTime) {
     lastTime = context.currentTime;
 
     View.activeWaveTab();
+
+    currentSong.isPlaying = true;
 }
 
 function setVolumeOfTrackDependingOnSliderValue(nbTrack) {
@@ -749,6 +751,8 @@ function stopAllTracks() {
 
     // reset the elapsed time
     currentSong.elapsedTimeSinceStart = 0;
+
+    currentSong.isPlaying = false;
 }
 
 function pauseAllTracks() {

@@ -6,18 +6,21 @@ var scene = {};
 scene.init = function () {
     this.textures = {};
 
-    // Texture scene
+    // OTHER SCENES
 
-    texscene.init();
+    faceMapScene.init();
+    normalMapScene.init();
+    faceDistMapScene.init();
 
     //Renderer
 
     this.canvas = document.getElementById("scenecanvas");
     this.renderer = new THREE.WebGLRenderer({
         antialias: true,
+        alpha: true,
         canvas: this.canvas
     });
-    this.renderer.setClearColor(0xffffff, 1.0);
+    this.renderer.setClearColor(0xffffff, 0.0);
     this.renderer.setSize(this.canvas.width, this.canvas.height);
 
     //SCENE
@@ -82,9 +85,11 @@ scene.init = function () {
 
     //EVENT HANDLERS
 
-    this.canvas.addEventListener('meshReady', this.loadFaceTextures.bind(this) );
-    this.canvas.addEventListener('faceTexLoaded', this.replaceFaceMaterial.bind(this) );
+    this.canvas.addEventListener('meshReady', this.replaceFaceMaterial.bind(this) );
+    //this.canvas.addEventListener('meshReady', this.loadFaceTextures.bind(this) );
+    //this.canvas.addEventListener('faceTexLoaded', this.replaceFaceMaterial.bind(this) );
     this.canvas.addEventListener('faceMaterialReady', this.addMorphingToMaterial.bind(this) );
+    this.canvas.addEventListener('faceMaterialReady', this.addDoubleSideToMaterial.bind(this) );
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
 
@@ -123,39 +128,47 @@ scene.applyMovementsFromFile = function() {
 }
 
 //LOAD TEXTURES
-scene.loadFaceTextures = function() {
-    var texUrls = { 
-        faceMap: 'model/ryrussell_face_1001.jpg',
-        //'img/tex/CGRright_109_normal.jpg'
-    };
-    for (var key in texUrls) {
-        this.texLoader.load(texUrls[key], 
-            function(key2, thescene) { 
-                return function(tex) {
-                    tex.wrapS = THREE.RepeatWrapping;
-                    tex.wrapT = THREE.RepeatWrapping;
-                    thescene.textures[key2] = tex;
-                    console.log("face", thescene.textures)
-                    thescene.canvas.dispatchEvent( new Event('faceTexLoaded'));
-                }
-            }(key, this)
-        );
-    }
-}
+// scene.loadFaceTextures = function() {
+//     var texUrls = { 
+//         faceMap: 'model/ryrussell_face_1001.jpg',
+//         //'img/tex/CGRright_109_normal.jpg'
+//     };
+//     for (var key in texUrls) {
+//         this.texLoader.load(texUrls[key], 
+//             function(key2, thescene) { 
+//                 return function(tex) {
+//                     tex.wrapS = THREE.RepeatWrapping;
+//                     tex.wrapT = THREE.RepeatWrapping;
+//                     thescene.textures[key2] = tex;
+//                     console.log("face", thescene.textures)
+//                     thescene.canvas.dispatchEvent( new Event('faceTexLoaded'));
+//                 }
+//             }(key, this)
+//         );
+//     }
+// }
 
 //Convert the materials to phong
 //Add normal map to face and torso
 //Note that bump and normal map cannot be used at the same time
 scene.replaceFaceMaterial = function() {
-    if (Object.keys(this.textures).length < 1)
-        return;
+    // if (Object.keys(this.textures).length < 1)
+    //     return;
     this.mesh.material.materials[3] = new THREE.MeshPhongMaterial({ 
-        map: this.textures.faceMap,
-        normalMap: texscene.rendertarget.texture,
+        map: faceMapScene.rendertarget.texture,
+        normalMap: normalMapScene.rendertarget.texture,
+        displacementMap: faceDistMapScene.rendertarget.texture,
         name: "Face",
-        shininess: 0
+        shininess: 0,
+        transparent: true
     });
     this.canvas.dispatchEvent( new Event('faceMaterialReady'));
+}
+
+scene.addDoubleSideToMaterial = function() {
+    this.mesh.material.materials.forEach( function (mat) {
+        mat.side = THREE.DoubleSide;
+    })
 }
 
 scene.addMorphingToMaterial = function() {
@@ -177,24 +190,82 @@ scene.animate = function() {
     this.controls.update();
     this.applyMovementsFromFile();
 
-    texscene.animate();
+    faceMapScene.animate();
+    normalMapScene.animate();
+    faceDistMapScene.animate();
 
+    scene.animateBass();
+    scene.animateKicks();
     scene.animatePad();
+    scene.animateSnare();
 
     //Apparantly the same renderer needs to be used for the two scenes
     //It doesn't work when the texscene has it's own renderer
-    this.renderer.render( texscene.scene, texscene.camera, texscene.rendertarget);
+    this.renderer.render( normalMapScene.scene, normalMapScene.camera, normalMapScene.rendertarget);
+    this.renderer.render( faceMapScene.scene, faceMapScene.camera, faceMapScene.rendertarget);
+    this.renderer.render(faceDistMapScene.scene, faceDistMapScene.camera, faceDistMapScene.rendertarget);
     this.renderer.render(this.scene, this.camera);
 }
 
+scene.animateSnare = function() {
+    if (!this.mesh)
+        return;
+    if (currentSong && currentSong.trackAnalyserData[21] && currentSong.isPlaying) {
+        this.mesh.morphTargetInfluences[6] = currentSong.trackAnalyserData[21][12] / 255 * 3;
+    } else {
+        this.mesh.morphTargetInfluences[6] = 0;
+    }
+}
+
+scene.animateToms = function() {
+    if (!this.mesh)
+        return;
+    if (currentSong && currentSong.trackAnalyserData[22] && currentSong.isPlaying) {
+        this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[22][15] / 255;
+    } else {
+        this.mesh.morphTargetInfluences[7] = 0;
+    }
+}
+
+scene.animateBass = function() {
+    if (!this.mesh)
+        return;
+    var faceMat = this.mesh.material.materials[3];
+    if (currentSong && currentSong.trackAnalyserData[1] && currentSong.isPlaying) {
+        faceMat.displacementScale = currentSong.trackAnalyserData[1][8] / 255 / 4;
+    } else {
+        faceMat.displacementScale = 0;
+    }
+}
+
+scene.animateKicks = function() {
+    if (currentSong && currentSong.trackAnalyserData[17] && currentSong.isPlaying) {
+        this.mesh.morphTargetInfluences[5] = currentSong.trackAnalyserData[17][9] / 255 * 3;
+    } else if (this.mesh && this.mesh.morphTargetInfluences[5] ) {
+        this.mesh.morphTargetInfluences[5] = 0;
+    }
+}
+
 scene.animatePad = function() {
-    if (currentSong && currentSong.trackAnalyserData[19]) {
-        this.mesh.material.materials[3].shininess = currentSong.trackAnalyserData[19][9] / 255 * 100 * 2;
-        this.mesh.material.materials[3].normalScale.x = currentSong.trackAnalyserData[19][9] / 255 * 4; //Animate the material to the 'pad' track
-        this.mesh.material.materials[3].normalScale.y = this.mesh.material.materials[3].normalScale.x;
-    }  else if (this.mesh && this.mesh.material.materials[3].normalScale) {
-        this.mesh.material.materials[3].normalScale.x = 0; 
-        this.mesh.material.materials[3].normalScale.y = this.mesh.material.materials[3].normalScale.x;
+    if (!this.mesh)
+        return;
+    var faceMat = this.mesh.material.materials[3];
+    if (currentSong && currentSong.trackAnalyserData[19] && currentSong.isPlaying) {
+        //Animate the face material to the 'pad' track
+        faceMat.shininess = currentSong.trackAnalyserData[19][9] / 255 * 100 * 2;
+        faceMat.normalScale.x = currentSong.trackAnalyserData[19][9] / 255 * 4; 
+        //Fade out the effect when 'kick' comes in
+        faceMat.normalScale.x -= this.mesh.morphTargetInfluences[5] * 2;
+        faceMat.normalScale.x = faceMat.normalScale.x < 0 ? 0 : faceMat.normalScale.x;
+        faceMat.normalScale.y = faceMat.normalScale.x;
+        //Also animate thickness of transparent stripes
+        THREE.alphaStripesShader.uniforms.thickness.value = 1.2 - currentSong.trackAnalyserData[19][5] / 255 / 2;
+        THREE.alphaStripesShader.uniforms.thickness.value = THREE.alphaStripesShader.uniforms.thickness.value < 0 ? 0 : THREE.alphaStripesShader.uniforms.thickness.value;
+    } else {
+        faceMat.shininess = 0;
+        faceMat.normalScale.x = 0; 
+        faceMat.normalScale.y = faceMat.normalScale.x;
+        THREE.alphaStripesShader.uniforms.thickness.value = 1.2;
     }
 }
 

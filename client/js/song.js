@@ -159,9 +159,11 @@ function Song(songName, context) {
         if (!this.paused) {
             // if we were not paused, then we stop
             this.stop();
+            this.isPlaying = false;
         } else {
             // else we start again from the previous position
             this.play(this.elapsedTimeSinceStart);
+            this.isPlaying = true;
         }
     };
 
