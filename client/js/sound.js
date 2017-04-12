@@ -409,9 +409,9 @@ function loadSong(songName) {
 
 
             if (specialElements.includes(instrument.name)) {
-                inner += '<a class="enableTrack down" title="' + instrument.name + '">' + instrument.name + '</a>';
+                inner += '<a class="enableTrack down ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '">' + instrument.name + '</a>';
             } else {
-                inner += '<a class="simpleTrackToggle down" title="' + instrument.name + '">' + instrument.name + '</a> ';
+                inner += '<a class="simpleTrackToggle down ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '">' + instrument.name + '</a> ';
             }
 
             inner += '</td>';

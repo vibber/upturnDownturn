@@ -45,6 +45,12 @@ scene.init = function () {
     this.directionalLight3.position.set( 0, 0.5, 1 );
     this.scene.add( this.directionalLight3 );
 
+    // ANIMATED LIGHT
+
+    this.animLight1 = new THREE.DirectionalLight( 0xffeedd, 0 );
+    this.animLight1.position.set( 0, 0, 2 );
+    this.scene.add( this.animLight1 );
+
     //LOAD MESH
 
     this.loader = new THREE.JSONLoader();
@@ -72,6 +78,10 @@ scene.init = function () {
         this.canvas.dispatchEvent( new Event('meshReady'));          
     }.bind(this));
 
+    //CLOCK
+
+    this.clock = new THREE.Clock();
+
     //CONTROLS
  
     this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
@@ -86,8 +96,6 @@ scene.init = function () {
     //EVENT HANDLERS
 
     this.canvas.addEventListener('meshReady', this.replaceFaceMaterial.bind(this) );
-    //this.canvas.addEventListener('meshReady', this.loadFaceTextures.bind(this) );
-    //this.canvas.addEventListener('faceTexLoaded', this.replaceFaceMaterial.bind(this) );
     this.canvas.addEventListener('faceMaterialReady', this.addMorphingToMaterial.bind(this) );
     this.canvas.addEventListener('faceMaterialReady', this.addDoubleSideToMaterial.bind(this) );
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
@@ -198,6 +206,8 @@ scene.animate = function() {
     scene.animateKicks();
     scene.animatePad();
     scene.animateSnare();
+    scene.animateToms();
+    scene.animateLead();
 
     //Apparantly the same renderer needs to be used for the two scenes
     //It doesn't work when the texscene has it's own renderer
@@ -207,10 +217,24 @@ scene.animate = function() {
     this.renderer.render(this.scene, this.camera);
 }
 
+scene.animateLead = function() {
+    if(!this.mesh)
+        return;
+    if (currentSong && currentSong.isPlaying && $("a.enableTrack.__lead").hasClass('down')) {
+        this.animLight1.intensity = 0.2 + currentSong.trackAnalyserData[18][0] / 255 * 3 * Math.random();
+        this.animLight1.position.x = Math.sin(this.clock.getElapsedTime()*10) * 5 * Math.random();
+        this.animLight1.position.y = Math.cos(this.clock.getElapsedTime()*10) * 10 * Math.random();
+    }
+    else if ($("a.enableTrack.__lead").hasClass('down'))
+        this.animLight1.intensity = 0.2;
+    else
+        this.animLight1.intensity = 0.0;
+}
+
 scene.animateSnare = function() {
     if (!this.mesh)
         return;
-    if (currentSong && currentSong.trackAnalyserData[21] && currentSong.isPlaying) {
+    if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__snare").hasClass('down')) {
         this.mesh.morphTargetInfluences[6] = currentSong.trackAnalyserData[21][12] / 255 * 3;
     } else {
         this.mesh.morphTargetInfluences[6] = 0;
@@ -220,8 +244,8 @@ scene.animateSnare = function() {
 scene.animateToms = function() {
     if (!this.mesh)
         return;
-    if (currentSong && currentSong.trackAnalyserData[22] && currentSong.isPlaying) {
-        this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[22][15] / 255;
+    if (currentSong && currentSong.isPlaying && $("a.enableTrack.__toms").hasClass('down')) {
+        this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[22][0] / 255 * 3;
     } else {
         this.mesh.morphTargetInfluences[7] = 0;
     }
@@ -231,7 +255,7 @@ scene.animateBass = function() {
     if (!this.mesh)
         return;
     var faceMat = this.mesh.material.materials[3];
-    if (currentSong && currentSong.trackAnalyserData[1] && currentSong.isPlaying) {
+    if (currentSong && currentSong.isPlaying && $("a.enableTrack.__bass").hasClass('down')) {
         faceMat.displacementScale = currentSong.trackAnalyserData[1][8] / 255 / 4;
     } else {
         faceMat.displacementScale = 0;
@@ -239,9 +263,11 @@ scene.animateBass = function() {
 }
 
 scene.animateKicks = function() {
-    if (currentSong && currentSong.trackAnalyserData[17] && currentSong.isPlaying) {
+    if (!this.mesh)
+        return;
+    if (currentSong && currentSong.isPlaying && $("a.enableTrack.__kicks").hasClass('down')) {
         this.mesh.morphTargetInfluences[5] = currentSong.trackAnalyserData[17][9] / 255 * 3;
-    } else if (this.mesh && this.mesh.morphTargetInfluences[5] ) {
+    } else {
         this.mesh.morphTargetInfluences[5] = 0;
     }
 }
@@ -250,7 +276,7 @@ scene.animatePad = function() {
     if (!this.mesh)
         return;
     var faceMat = this.mesh.material.materials[3];
-    if (currentSong && currentSong.trackAnalyserData[19] && currentSong.isPlaying) {
+    if (currentSong && currentSong.trackAnalyserData[19] && currentSong.isPlaying && $("a.enableTrack.__pad").hasClass('down')) {
         //Animate the face material to the 'pad' track
         faceMat.shininess = currentSong.trackAnalyserData[19][9] / 255 * 100 * 2;
         faceMat.normalScale.x = currentSong.trackAnalyserData[19][9] / 255 * 4; 
