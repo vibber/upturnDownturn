@@ -45,11 +45,58 @@ scene.init = function () {
     this.directionalLight3.position.set( 0, 0.5, 1 );
     this.scene.add( this.directionalLight3 );
 
-    // ANIMATED LIGHT
-
+    //White strobe
     this.animLight1 = new THREE.DirectionalLight( 0xffeedd, 0 );
     this.animLight1.position.set( 0, 0, 2 );
     this.scene.add( this.animLight1 );
+
+    //Pink
+    this.animLight2 = new THREE.DirectionalLight( 0xffa1ff, 0 );
+    this.animLight2.position.set( 5, 0, -5 );
+    this.scene.add( this.animLight2 );
+
+    //Light green
+    this.animLight3 = new THREE.DirectionalLight( 0xe4fece, 0 );
+    this.animLight3.position.set( -5, 0, -5 );
+    this.scene.add( this.animLight3 );
+
+    //darkish blue
+    this.animLight4 = new THREE.DirectionalLight( 0x468fb8, 0 );
+    this.animLight4.position.set( 0, -1, 0 );
+    this.scene.add( this.animLight4 );
+
+    //Red
+    this.animLight5 = new THREE.DirectionalLight( 0xe60f03, 0 );
+    this.animLight5.position.set( -3, -3, -3 );
+    this.scene.add( this.animLight5 );
+
+    //Cyan
+    this.animLight6 = new THREE.DirectionalLight( 0x4ac3a0, 0 );
+    this.animLight6.position.set( 3, -3, -3 );
+    this.scene.add( this.animLight6 );
+
+    //Light green 2
+    this.animLight7 = new THREE.DirectionalLight( 0xcfff8b, 1 );
+    this.animLight7.position.set( 1.8, 3, -3 );
+    this.scene.add( this.animLight7 );    
+
+    //Orange
+    this.animLight8 = new THREE.DirectionalLight( 0xff7612, 1 );
+    this.animLight8.position.set( -1.8, 3, -3 );
+    this.scene.add( this.animLight8 );    
+
+    //Yellow uplight
+    this.animLight9 = new THREE.DirectionalLight( 0xeecc00, 1 );
+    this.animLight9.position.set( 0, -1, -1 );
+    this.scene.add( this.animLight9 );
+
+    //WALL
+
+    var mat = new THREE.MeshLambertMaterial( {color: 0xffffff} );
+    var geo = new THREE.PlaneGeometry( 1000, 500, 1, 1 );
+    this.wallMesh = new THREE.Mesh(geo, mat);
+    this.wallMesh.position.z = -40;
+    this.scene.add(this.wallMesh);
 
     //LOAD MESH
 
@@ -135,27 +182,6 @@ scene.applyMovementsFromFile = function() {
         this.dataPointer = 0;
 }
 
-//LOAD TEXTURES
-// scene.loadFaceTextures = function() {
-//     var texUrls = { 
-//         faceMap: 'model/ryrussell_face_1001.jpg',
-//         //'img/tex/CGRright_109_normal.jpg'
-//     };
-//     for (var key in texUrls) {
-//         this.texLoader.load(texUrls[key], 
-//             function(key2, thescene) { 
-//                 return function(tex) {
-//                     tex.wrapS = THREE.RepeatWrapping;
-//                     tex.wrapT = THREE.RepeatWrapping;
-//                     thescene.textures[key2] = tex;
-//                     console.log("face", thescene.textures)
-//                     thescene.canvas.dispatchEvent( new Event('faceTexLoaded'));
-//                 }
-//             }(key, this)
-//         );
-//     }
-// }
-
 //Convert the materials to phong
 //Add normal map to face and torso
 //Note that bump and normal map cannot be used at the same time
@@ -202,12 +228,15 @@ scene.animate = function() {
     normalMapScene.animate();
     faceDistMapScene.animate();
 
+    scene.animateFX();
+    scene.animateWoof();
+    scene.animateShaker();
+    scene.animateLead();
+    scene.animateSnare();
+    scene.animateToms();
     scene.animateBass();
     scene.animateKicks();
     scene.animatePad();
-    scene.animateSnare();
-    scene.animateToms();
-    scene.animateLead();
 
     //Apparantly the same renderer needs to be used for the two scenes
     //It doesn't work when the texscene has it's own renderer
@@ -217,61 +246,130 @@ scene.animate = function() {
     this.renderer.render(this.scene, this.camera);
 }
 
+//Animate FX colored lights
+scene.animateFX = function() {
+    if (!this.mesh)
+        return;
+    if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.___f_x").hasClass('down')) {
+        this.animLight2.intensity = 0.8 + currentSong.trackAnalyserData[0][10] / 255 * 3;
+    }
+    else if ($("a.simpleTrackToggle.___f_x").hasClass('down'))
+        this.animLight2.intensity = 0.8;
+    else {
+         this.animLight2.intensity = 0.0;
+    }
+    this.animLight3.intensity = this.animLight2.intensity;
+}
+
+//Animate open mouth
+scene.animateWoof = function() {
+    if (!this.mesh)
+        return;
+    if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__woof-__002b-clave").hasClass('down')) {
+        this.mesh.morphTargetInfluences[8] = currentSong.trackAnalyserData[23][12] / 255 * 2;
+        this.animLight8.intensity = 0.5 + currentSong.trackAnalyserData[23][12] / 255;
+    } else if ($("a.simpleTrackToggle.__woof-__002b-clave").hasClass('down')) {
+        this.animLight8.intensity = 0.5;
+    } else {
+        this.animLight8.intensity = 0.0;
+        this.mesh.morphTargetInfluences[8] = 0;
+    }
+}
+
+//Animate thickness of transparent stripes
+scene.animateShaker = function() {
+    if (!this.mesh)
+        return;
+    if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__shaker-echo-__002b-clap").hasClass('down')) {
+        THREE.alphaStripesShader.uniforms.thickness.value = 1.2 - currentSong.trackAnalyserData[20][15] / 255 / 2;
+        THREE.alphaStripesShader.uniforms.thickness.value = THREE.alphaStripesShader.uniforms.thickness.value < 0 ? 0 : THREE.alphaStripesShader.uniforms.thickness.value;
+        this.animLight7.intensity = 0.5 + currentSong.trackAnalyserData[20][15] / 255;
+    } else if ($("a.simpleTrackToggle.__shaker-echo-__002b-clap").hasClass('down')){
+        this.animLight7.intensity = 0.5;
+    } else {
+        this.animLight7.intensity = 0.0;        
+        THREE.alphaStripesShader.uniforms.thickness.value = 1.2;
+    }
+}
+
+//Animate white strobe light
 scene.animateLead = function() {
     if(!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__lead").hasClass('down')) {
-        this.animLight1.intensity = 0.2 + currentSong.trackAnalyserData[18][0] / 255 * 3 * Math.random();
-        this.animLight1.position.x = Math.sin(this.clock.getElapsedTime()*10) * 5 * Math.random();
-        this.animLight1.position.y = Math.cos(this.clock.getElapsedTime()*10) * 10 * Math.random();
+        this.animLight1.intensity = 0.2 + currentSong.trackAnalyserData[18][0] / 255 * 1 * Math.random();
+        this.animLight1.position.x = currentSong.trackAnalyserData[18][0] * Math.sin(this.clock.getElapsedTime()*10) * 5 * Math.random();
+        this.animLight1.position.y = currentSong.trackAnalyserData[18][0] * Math.cos(this.clock.getElapsedTime()*10) * 10 * Math.random();
     }
-    else if ($("a.enableTrack.__lead").hasClass('down'))
+    else if ($("a.enableTrack.__lead").hasClass('down')) {
         this.animLight1.intensity = 0.2;
-    else
+     } else {
         this.animLight1.intensity = 0.0;
+    }
 }
 
+//Animate one side of face
 scene.animateSnare = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__snare").hasClass('down')) {
         this.mesh.morphTargetInfluences[6] = currentSong.trackAnalyserData[21][12] / 255 * 3;
+        this.animLight6.intensity = 0.5 + currentSong.trackAnalyserData[21][12] / 255 * 2;
+    } else if ($("a.simpleTrackToggle.__snare").hasClass('down')) {
+        this.animLight6.intensity = 0.5;
     } else {
+        this.animLight6.intensity = 0.0;
         this.mesh.morphTargetInfluences[6] = 0;
     }
 }
 
+//Animate other side of face
 scene.animateToms = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__toms").hasClass('down')) {
         this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[22][0] / 255 * 3;
+        this.animLight5.intensity = 0.5 + currentSong.trackAnalyserData[22][0] / 255 * 2;
+    } else if ($("a.enableTrack.__toms").hasClass('down')) {
+        this.animLight5.intensity = 0.5;
     } else {
         this.mesh.morphTargetInfluences[7] = 0;
+        this.animLight5.intensity = 0.0; 
     }
 }
 
+//Animate mesh distortion
 scene.animateBass = function() {
     if (!this.mesh)
         return;
     var faceMat = this.mesh.material.materials[3];
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__bass").hasClass('down')) {
         faceMat.displacementScale = currentSong.trackAnalyserData[1][8] / 255 / 4;
+        this.animLight4.intensity = 1 + currentSong.trackAnalyserData[1][8] / 255;
+    } else if ($("a.enableTrack.__bass").hasClass('down')) {
+        this.animLight4.intensity = 1;
     } else {
         faceMat.displacementScale = 0;
+        this.animLight4.intensity = 0;
     }
 }
 
+//Animate brow down
 scene.animateKicks = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__kicks").hasClass('down')) {
         this.mesh.morphTargetInfluences[5] = currentSong.trackAnalyserData[17][9] / 255 * 3;
+        this.directionalLight3.intensity = 0.5 + currentSong.trackAnalyserData[17][9] / 255;
+    } else if ($("a.enableTrack.__kicks").hasClass('down')) {
+        this.directionalLight3.intensity = 0.5;
     } else {
         this.mesh.morphTargetInfluences[5] = 0;
+        this.directionalLight3.intensity = 0.3;
     }
 }
 
+//Animate snake skin normal map
 scene.animatePad = function() {
     if (!this.mesh)
         return;
@@ -280,18 +378,16 @@ scene.animatePad = function() {
         //Animate the face material to the 'pad' track
         faceMat.shininess = currentSong.trackAnalyserData[19][9] / 255 * 100 * 2;
         faceMat.normalScale.x = currentSong.trackAnalyserData[19][9] / 255 * 4; 
-        //Fade out the effect when 'kick' comes in
-        faceMat.normalScale.x -= this.mesh.morphTargetInfluences[5] * 2;
         faceMat.normalScale.x = faceMat.normalScale.x < 0 ? 0 : faceMat.normalScale.x;
         faceMat.normalScale.y = faceMat.normalScale.x;
-        //Also animate thickness of transparent stripes
-        THREE.alphaStripesShader.uniforms.thickness.value = 1.2 - currentSong.trackAnalyserData[19][5] / 255 / 2;
-        THREE.alphaStripesShader.uniforms.thickness.value = THREE.alphaStripesShader.uniforms.thickness.value < 0 ? 0 : THREE.alphaStripesShader.uniforms.thickness.value;
+        this.animLight9.intensity = 1.0 + currentSong.trackAnalyserData[19][9] / 255;
+    } else if ($("a.enableTrack.__pad").hasClass('down')) {
+        this.animLight9.intensity = 1.0;
     } else {
         faceMat.shininess = 0;
         faceMat.normalScale.x = 0; 
         faceMat.normalScale.y = faceMat.normalScale.x;
-        THREE.alphaStripesShader.uniforms.thickness.value = 1.2;
+        this.animLight9.intensity = 0.0;
     }
 }
 
