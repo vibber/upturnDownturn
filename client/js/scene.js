@@ -1,6 +1,3 @@
-// This version of the script allows you to record faceOSC data by pressing space. Ie. data about the movement of the face.
-// Data will be saved in a data.json.js file
-
 var scene = {};
 
 scene.init = function () {
