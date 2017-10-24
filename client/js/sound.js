@@ -27,7 +27,7 @@ var selectionForLoop = {
 
 
 // Sample size in pixels
-var SAMPLE_HEIGHT = 30; //75;
+var SAMPLE_HEIGHT = 16; //75;
 
 // Useful for memorizing when we paused the song
 var lastTime = 0;
@@ -252,18 +252,16 @@ function drawTrack(decodedBuffer, trackNumber, VisibleIndex) {
     // second = height of the sample drawing
     waveformDrawer.drawWave(y, SAMPLE_HEIGHT);
 
-    View.masterCanvasContext.strokeStyle = "white";
-    View.masterCanvasContext.strokeRect(x, y, window.View.masterCanvas.width, SAMPLE_HEIGHT);
+    // View.masterCanvasContext.strokeStyle = "white";
+    // View.masterCanvasContext.strokeRect(x, y, window.View.masterCanvas.width, SAMPLE_HEIGHT);
 
-    View.masterCanvasContext.font = '10pt Arial';
-    View.masterCanvasContext.fillStyle = 'white';
-    View.masterCanvasContext.fillText(trackName, x + 10, y + 20);
+    //removed by vib
+    // View.masterCanvasContext.font = '10pt Arial';
+    // View.masterCanvasContext.fillStyle = 'white';
+    // View.masterCanvasContext.fillText(trackName, x + 10, y + 20);
 }
 
 function finishedLoading(bufferList) {
-    //Added by vib
-    addEventHandlers();
-
     log("Finished loading all tracks, press Start button above!");
 
     // set the decoded buffer in the song object
@@ -293,6 +291,8 @@ function finishedLoading(bufferList) {
             obj.value = 100;
         });
     }
+
+        $('#songs').trigger('tracksLoaded');
 }
 
 
@@ -336,6 +336,10 @@ function loadSongList() {
         }).appendTo(s);
     });
 
+
+    //Added by vib
+    $('#songs').trigger('dropdownReady'); 
+
     // xhr.onload = function (e) {
     //     var songList = JSON.parse(this.response);
 
@@ -378,7 +382,7 @@ function loadSong(songName) {
         //var song = JSON.parse(this.response);
 
         // resize canvas depending on number of samples
-        resizeSampleCanvas(song.instruments.length);
+        //resizeSampleCanvas(song.instruments.length);
 
         // for eah instrument/track in the song
         song.instruments.forEach(function (instrument, trackNumber) {
@@ -408,11 +412,12 @@ function loadSong(songName) {
                     "<span id='volspan'><input type='range' class = 'volumeSlider custom' id='volume" + trackNumber + "' min='0' max = '100' value='100' oninput='setVolumeOfTrackDependingOnSliderValue(" + trackNumber + ");'/></span></div>";
 
 
-            if (specialElements.includes(instrument.name)) {
-                inner += '<a class="enableTrack ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '">' + instrument.name + '</a>';
-            } else {
-                inner += '<a class="simpleTrackToggle ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '">' + instrument.name + '</a> ';
-            }
+            //Made by vib but no longer active. Code has been moved
+            // if (specialElements.includes(instrument.name)) {
+            //     inner += '<a class="enableTrack down ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '">' + instrument.name + '</a>';
+            // } else {
+            //     inner += '<a class="simpleTrackToggle down ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '">' + instrument.name + '</a> ';
+            // }
 
             inner += '</td>';
 
@@ -433,24 +438,27 @@ function loadSong(songName) {
         $(".mute").attr("disabled", true);
         $(".solo").attr("disabled", true);
 
+        $("#songs").trigger("loadTracksStart");
+
         // Loads all samples for the currentSong
         loadAllSoundSamples();
     //};
     //xhr.send();
 
 
-    //Added by vibeke. 
-    $('a.enableTrack').each(function(){
-        //Mute a lot of the tracks according to button state
-        muteTracksFromSongElementsState(this);
+    // //Added by vibeke. 
+    //This code has been moved
+    //  $('a.enableTrack').each(function(){
+    //      //Mute a lot of the tracks according to button state
+    //      muteTracksFromSongElementsState(this);
 
-        //then unmute the one track that should be played
-        var combinedTrack = unmuteCombinedTrackFromSongElementsState();  
+    //      //then unmute the one track that should be played
+    //      var combinedTrack = unmuteCombinedTrackFromSongElementsState();  
 
-        //If there is no combined track unmute the individual tracks
-        if (!combinedTrack)
-            unmuteIndividualTracksFromSongElementState();
-    });
+    //      //If there is no combined track unmute the individual tracks
+    //      if (!combinedTrack)
+    //          unmuteIndividualTracksFromSongElementState();
+    //  });
 }
 
 function getMousePos(canvas, evt) {
@@ -517,9 +525,11 @@ function animateTime() {
             var totalTime;
 
             View.frontCanvasContext.fillStyle = 'white';
-            View.frontCanvasContext.font = '14pt Arial';
+            //View.frontCanvasContext.font = '14pt Arial';
+            View.frontCanvasContext.font = '10pt Arial';
             //View.frontCanvasContext.fillText(toFixed(currentSong.elapsedTimeSinceStart, 1) + "s", 180, 20);
-            View.frontCanvasContext.fillText((currentSong.elapsedTimeSinceStart + "").toFormattedTime() + "s", 180, 20);
+            //View.frontCanvasContext.fillText((currentSong.elapsedTimeSinceStart + "").toFormattedTime() + "s", 180, 20);
+            View.frontCanvasContext.fillText((currentSong.elapsedTimeSinceStart + "").toFormattedTime() + "s", 140, 20);
             //console.log("dans animate");
 
             // at least one track has been loaded
@@ -687,6 +697,10 @@ function drawSampleImage(imageURL, trackNumber, trackName) {
 
 function resizeSampleCanvas(numTracks) {
     window.View.masterCanvas.height = SAMPLE_HEIGHT * numTracks;
+    
+    //Added by vib
+    window.View.blackCanvas.height = window.View.masterCanvas.height;
+
     window.View.frontCanvas.height = window.View.masterCanvas.height;
 }
 

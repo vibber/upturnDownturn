@@ -31,6 +31,11 @@ function View() {
         this.masterCanvasContext = this.masterCanvas.getContext('2d');
         this.frontCanvas = document.getElementById(this.frontCanvas);
         this.frontCanvasContext = this.frontCanvas.getContext('2d');
+        this.blackCanvas = document.getElementById("blackCanvas");
+
+        //Added by vib
+        this.blackCanvas.height = window.View.masterCanvas.height;
+        this.blackCanvas.width = window.View.masterCanvas.width;
 
         // make it same size as its brother
         this.frontCanvas.height = window.View.masterCanvas.height;

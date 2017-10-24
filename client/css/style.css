@@ -218,26 +218,253 @@ output {
     font-size: 2em;
 }
 
-/**********************************/
 
-a.enableTrack, a.simpleTrackToggle {
-    background: #ccc;
-    cursor: pointer;
-    border-top: solid 2px #eaeaea;
-    border-left: solid 2px #eaeaea;
-    border-bottom: solid 2px #777;
-    border-right: solid 2px #777;
-    padding: 5px 5px;           
-    }
+/*******************************/
+/*    vib                      */
 
-a.enableTrack.down, a.simpleTrackToggle.down {
-    background: #bbb;
-    border-top: solid 2px #777;
-    border-left: solid 2px #777;
-    border-bottom:solid 2px  #eaeaea;
-    border-right: solid 2px #eaeaea;
-    }
+body {
+    margin: 0px 0px 0px 0px;
+}
+
+
+#app {
+    display: none;
+}
+
 
 div.originalbuttons {
     display:none;
+}
+
+#trackControl {
+    overflow: visible;
+}
+
+#scroll {
+    left: 30px;
+}
+
+#waveCanvas {
+    width: 92px;
+    height: 40px;
+    top: 24px;
+    left: 11px;
+    position: absolute;
+}
+
+/*******************************/
+
+#player {
+    position: absolute;
+    top: 50px;
+    left: 25px;
+    display:none;
+}
+
+#player #topbar {
+    width: 275px;
+    height: 14px;
+    background-image: url(../img/player/playerTop.png);
+}
+
+#player #main {
+    width: 275px;
+    height: 229px;
+    background-image: url(../img/player/playerBg.png);
+}
+
+#player #topPanel {
+    height: 78px;
+    width:275px;
+}
+
+#player #topPanel #buttons {
+    position: absolute;
+    left: 110px;
+    top: 40px;
+} 
+
+#player #topPanel #buttons > div {
+    width: 23px;
+    height: 17px;
+    display: inline-block;
+}
+
+#player #topPanel #buttons .play {
+    background-image: url(../img/player/play-up.png);
+}
+
+#player #topPanel #buttons .pause {
+    background-image: url(../img/player/pause-up.png);
+}
+
+#player #topPanel #buttons .stop {
+    background-image: url(../img/player/stop-up.png);
+}
+
+#player #topPanel #buttons .play.down {
+    background-image: url(../img/player/play-down.png);
+}
+
+#player #topPanel #buttons .pause.down {
+    background-image: url(../img/player/pause-down.png);
+}
+
+#player #topPanel #buttons .stop.down {
+    background-image: url(../img/player/stop-down.png);
+}
+
+#player #bottomPanel {
+    width: 275px;
+    height: 151px;
+}
+
+#player #bottomPanel #buttons {
+    height: 151px;
+    width: 72px;
+    position: absolute;
+    left: 5px;
+}
+
+#player #bottomPanel #buttons a {
+    height: 16px;
+    width: 67px;
+    display:block;   
+}
+
+#player .___f_x.down {
+    background-image: url(../img/player/___f_x-down.png);
+}
+
+#player .___f_x {
+    background-image: url(../img/player/___f_x-up.png);
+}
+
+#player .__bass.down {
+    background-image: url(../img/player/__bass-down.png);
+}
+
+#player .__bass {
+    background-image: url(../img/player/__bass-up.png);
+}
+
+#player .__kicks.down {
+    background-image: url(../img/player/__kicks-down.png);
+}
+
+#player .__kicks {
+    background-image: url(../img/player/__kicks-up.png);
+}
+
+#player .__lead.down {
+    background-image: url(../img/player/__lead-down.png);
+}
+
+#player .__lead {
+    background-image: url(../img/player/__lead-up.png);
+}
+
+#player .__pad.down {
+    background-image: url(../img/player/__pad-down.png);
+}
+
+#player .__pad {
+    background-image: url(../img/player/__pad-up.png);
+}
+
+#player .__shaker-echo-__002b-clap.down {
+    background-image: url(../img/player/__shaker-echo-__002b-clap-down.png);
+}
+
+#player .__shaker-echo-__002b-clap {
+    background-image: url(../img/player/__shaker-echo-__002b-clap-up.png);
+}
+
+#player .__snare.down {
+    background-image: url(../img/player/__snare-down.png);
+}
+
+#player .__snare {
+    background-image: url(../img/player/__snare-up.png);
+}
+
+#player .__toms.down {
+    background-image: url(../img/player/__toms-down.png);
+}
+
+#player .__toms {
+    background-image: url(../img/player/__toms-up.png);
+}
+
+#player .__woof-__002b-clave.down {
+    background-image: url(../img/player/__woof-__002b-clave-down.png);
+}
+
+#player .__woof-__002b-clave {
+    background-image: url(../img/player/__woof-__002b-clave-up.png);
+}
+
+/******************************/
+
+#scenecanvas {
+    position: absolute;
+}
+
+#canvass {
+    margin-left: 0px;
+}
+
+#myCanvas, #blackCanvas, #frontCanvas {
+    position: absolute;
+    right: 5px;
+}
+
+/****************************/
+
+#modal
+{
+    position: fixed;
+    top: 0;
+    left: -100%;
+    height: 100%;
+    width: 100%;
+    background: red;
+    z-index:999;
+    font-family: Verdana;
+    font-size: 10pt;
+    color:#fff;
+}
+
+#modal-tbody, #modal-tr, #modal-td
+{
+    height: 100%;
+}
+
+#modal-td
+{
+    vertical-align: middle;
+}
+
+#modal-content
+{
+    font-size: 10pt;
+    line-height: 16pt;
+    position: relative;
+    left: 100%;
+    height: auto;
+    width: 50%; 
+    max-width: 500px;
+    min-width: 80px;
+
+    margin: 0 auto;
+    border: 1px solid;
+    background: #333333;
+    overflow: auto;
+    padding: 20px;
+}
+
+/*********************************/
+
+#disableClicks {
+    position: absolute;
 }

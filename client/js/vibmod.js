@@ -7,6 +7,18 @@
 // But if e.g. 'lead' and 'bass' are chosen there are two separate tracks called 'lead' and 'bass'
 // that should be enabled
 
+//There are more mods in sound.js line 364: function loadSong
+
+//To-do:
+//Check in browsers
+
+//Please turn up the sound
+//You can change the music and visuals by pressing the buttons in the control panel on the left
+//You can click the sound waves to jump to another part of the music.
+//You can also drag to change your angle of view
+
+
+
 var songList = ["upturn downturn qual 2"];
 var song = {"id":"upturn downturn qual 2","instruments":[{"name":"FX","sound":"FX.ogg"},{"name":"bass","sound":"bass.ogg"},{"name":"kicks&bass","sound":"kicks&bass.ogg"},{"name":"kicks&lead&bass","sound":"kicks&lead&bass.ogg"},{"name":"kicks&lead&pad&bass","sound":"kicks&lead&pad&bass.ogg"},{"name":"kicks&lead&pad&toms&bass","sound":"kicks&lead&pad&toms&bass.ogg"},{"name":"kicks&lead&pad&toms","sound":"kicks&lead&pad&toms.ogg"},{"name":"kicks&lead&pad","sound":"kicks&lead&pad.ogg"},{"name":"kicks&lead&toms&bass","sound":"kicks&lead&toms&bass.ogg"},{"name":"kicks&lead&toms","sound":"kicks&lead&toms.ogg"},{"name":"kicks&lead","sound":"kicks&lead.ogg"},{"name":"kicks&pad&bass","sound":"kicks&pad&bass.ogg"},{"name":"kicks&pad&toms&bass","sound":"kicks&pad&toms&bass.ogg"},{"name":"kicks&pad&toms","sound":"kicks&pad&toms.ogg"},{"name":"kicks&pad","sound":"kicks&pad.ogg"},{"name":"kicks&toms&bass","sound":"kicks&toms&bass.ogg"},{"name":"kicks&toms","sound":"kicks&toms.ogg"},{"name":"kicks","sound":"kicks.ogg"},{"name":"lead","sound":"lead.ogg"},{"name":"pad","sound":"pad.ogg"},{"name":"shaker echo + clap","sound":"shaker echo + clap.ogg"},{"name":"snare","sound":"snare.ogg"},{"name":"toms","sound":"toms.ogg"},{"name":"woof + clave","sound":"woof + clave.ogg"}]}
 
@@ -17,15 +29,152 @@ var hideTracks = true; //Can be turned off for debugging
 //These are the names of the special elements that affect multiple tracks
 var specialElements = [ 'bass', 'toms', 'pad', 'kicks', 'lead'];
 
-/////////////////////////////////////
+//Counts the progress of loading displayed in the modal window
+var modalCounter = 0;
 
-//Add button event handlers
+var modalMessages = [
+    'Please wait while the music is loading. This will take a few minutes.',
+    'We know it takes quite some time. Thank you for your patience',
+    'Please turn on sound',
+    'Change the music and visuals by pressing the buttons in the control panel',
+    'You can click the sound waves to jump to another part of the song',
+]
+
+/////////////////////////////////////
 $(document).ready(function(){
+
+    initDisableClicks();
+
+    moveWaveCanvas();
+
+    $(window).on("resize", initDisableClicks);
+ 
+    $("#songs").on('songListLoaded', updateModalCounter); 
+    $("#scenecanvas").on('meshReady', updateModalCounter);
+    $("#scenecanvas").on('transformationDataReady', updateModalCounter);
+    $("#scenecanvas").on('meshVisible', updateModalCounter);
+    $("#songs").on('dropdownReady', updateModalCounter); 
+    $("#songs").on('loadTracksStart', updateModalCounter); 
+    $("#songs").on('loadingProgress', updateModalCounter); 
+
+    $("#scenecanvas").on('meshVisible', showPlayer);    
+    $("#songs").on('dropdownReady', triggerLoadSong); 
+    $("#songs").on('dropdownReady', progressTimer); 
+    $("#songs").on("tracksLoaded", createButtons); 
+    $("#songs").on('tracksLoaded', triggerPlayButton);
+    $("#songs").on('everythingLoaded', hideModal);
+    $("#songs").on('everythingLoaded', hideDisableClicks);
+
+    draggablePlayer();
 
     //Add some data to the 'song' object
     addVisibleToSongObject();
 
+    moveAndResizeTrackCanvases();
 });
+
+////////////////////////////////////
+
+// Create a timer that sends an event after a given interval. This is because we don't have a 
+// progress event when waiting for the tracks to be decoded
+// so we simply use a timer in order to give people the impression that the loading is working
+function progressTimer() {
+  setTimeout(function(){ 
+    $("#songs").trigger("loadingProgress"); 
+  }, 10000);
+}
+
+
+function hideDisableClicks() {
+    $("#disableClicks").hide();
+}
+
+// A div taht prevents clicks while page is loading
+function initDisableClicks() {
+    $("#disableClicks").click(function() { alert('Please wait until the page has done loading')});
+    $("#disableClicks").width(window.innerWidth);
+    $("#disableClicks").height(window.innerHeight);    
+}
+
+function showPlayer() {
+    $("#player").css('display', 'block');
+    $("#player").css('position', 'absolute');
+}
+
+function updateModalCounter() {
+    modalCounter++;
+    $("#modal #progress").text(modalCounter + "/7");
+}
+
+function hideModal() {
+    $("#modal").hide();
+}
+
+function draggablePlayer() {
+    $("#player").draggable({ 
+        containment: 'window', 
+        scroll: false, 
+        handle: '#topbar' 
+    })
+}
+
+function moveWaveCanvas() {
+    $("#waveCanvas").detach().appendTo('#player #topPanel');
+}
+
+//This moves the track waveform displays up into our player
+function moveAndResizeTrackCanvases() {
+    //resize
+    var height = SAMPLE_HEIGHT * returnVisibleCount(song.instruments);
+    $('#myCanvas').prop('height', height);
+
+    //move
+    $("#canvass").detach().appendTo('#player #bottomPanel');
+}
+
+function triggerPlayButton() {
+    $('#songs').trigger('everythingLoaded'); 
+
+    window.setTimeout(function() {
+        $("#bplay").click();    
+    },2000);
+}
+
+function createButtons() {
+    var html = "";
+    song.instruments.forEach( function(instrument) {
+        if (instrument.visible == false)
+            return; //Skip drawing this button
+        if (specialElements.includes(instrument.name)) {
+            html += '<a class="enableTrack down ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '"></a>';
+        } else {
+            html += '<a class="simpleTrackToggle down ' +  makeSafeForCSS(instrument.name) + '" title="' + instrument.name + '"></a> ';
+        }
+    });
+    $("#player #bottomPanel #buttons").append(html);
+
+    setTracksState();
+
+    addEventHandlers();
+}
+
+function setTracksState() {
+    $('a.enableTrack').each(function(){
+     //Mute a lot of the tracks according to button state
+     muteTracksFromSongElementsState(this);
+
+     //then unmute the one track that should be played
+     var combinedTrack = unmuteCombinedTrackFromSongElementsState();  
+
+     //If there is no combined track unmute the individual tracks
+     if (!combinedTrack)
+         unmuteIndividualTracksFromSongElementState();
+    });
+}
+
+function triggerLoadSong() {
+    $('#songSelect>option:eq(1)').prop('selected', true).trigger('change');
+}
 
 function addEventHandlers() {
 	//Toggle buttons css
@@ -44,6 +193,9 @@ function addEventHandlers() {
         //If there is no combined track unmute the individual tracks
         if (!combinedTrack)
         	unmuteIndividualTracksFromSongElementState();
+
+        //Set waveform drawing visibility
+        toggleWaveformVisible($(this));
     });
 
     //Toggle button css
@@ -56,7 +208,43 @@ function addEventHandlers() {
     	elName = $(this).attr('title');
     	var index = findIndexInInstrumentsArray(elName);
     	muteUnmuteTrack(index);
-	});    
+
+        toggleWaveformVisible($(this));
+	}); 
+
+    //Toggle play/pause/stop buttons css
+    $('#player #topPanel #buttons > div').mousedown(function(){
+        $(this).addClass("down");
+    }).
+    mouseup(function() {
+        $(this).removeClass("down");
+    });
+
+    //Toggle play/pause/stop actions
+    $('#player #topPanel #buttons .play').mousedown(function(){
+        playAllTracks(0);
+    })
+
+    $('#player #topPanel #buttons .pause').mousedown(function(){
+        pauseAllTracks();
+    })
+
+    $('#player #topPanel #buttons .stop').mousedown(function(){
+        stopAllTracks();
+    })
+}
+
+//Iput the jquery element of a track button
+//sets the waveform drawing visibility based on the button state
+function toggleWaveformVisible(jqueryEl) {
+    elName = $(jqueryEl).attr('title');
+    var index = findIndexInInstrumentsArray(elName);
+
+    if ($(jqueryEl).hasClass('down')) {
+        drawBlack($(jqueryEl).index(), false);
+    } else {
+        drawBlack($(jqueryEl).index(), true);
+    }
 }
 
 //Look up a track name in the song.instruments aray and return the index of it
@@ -80,8 +268,22 @@ function addVisibleToSongObject() {
 	})
 }
 
+function returnVisibleCount(instruments) {
+    count = 0;
+    instruments.forEach( function(instr) {
+        if (instr.visible == true) {
+            count++;
+        }
+    });
+    return count;
+}
+
 function muteTracksFromSongElementsState(button) {
+
 	var songElements = createSongElementsArray();
+
+    console.log("songElements", songElements);
+    console.log("instruments", song.instruments);
 
 	songElements.forEach(function(el) {
 		songElementName = el.name;
@@ -253,4 +455,22 @@ function unmuteTrack(trackNumber) {
 
     // adjust track volumes dependinf on all mute/solo states
     currentSong.setTrackVolumesDependingOnMuteSoloStatus();
+}
+
+//Draws a black bar covering the track waveform
+//Input the index of the track
+//Mode: true draw or false delete black bar
+function drawBlack(index,mode) {
+    var blackCanvas = document.getElementById("blackCanvas");
+    var x = 0;
+    var y = index * SAMPLE_HEIGHT;
+    var width = blackCanvas.width;
+    var height = SAMPLE_HEIGHT;
+    var ctx = blackCanvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    if (mode == true) {
+        ctx.fillRect(x, y, width, height);
+    } else {
+        ctx.clearRect(x, y, width, height);
+    }
 }

@@ -3,12 +3,6 @@ var scene = {};
 scene.init = function () {
     this.textures = {};
 
-    // OTHER SCENES
-
-    faceMapScene.init();
-    normalMapScene.init();
-    faceDistMapScene.init();
-
     //Renderer
 
     this.canvas = document.getElementById("scenecanvas");
@@ -18,7 +12,12 @@ scene.init = function () {
         canvas: this.canvas
     });
     this.renderer.setClearColor(0xffffff, 0.0);
-    this.renderer.setSize(this.canvas.width, this.canvas.height);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    // OTHER SCENES
+
+    faceMapScene.init();
+    normalMapScene.init();
+    faceDistMapScene.init();
 
     //SCENE
 
@@ -27,6 +26,8 @@ scene.init = function () {
 
     this.camera = new THREE.PerspectiveCamera(30, this.canvas.width / this.canvas.height, 10, 1000);
     this.camera.position.z = 80;
+
+    window.addEventListener('resize', this.onWindowResize, false);
 
     //LIGHTS
 
@@ -95,14 +96,24 @@ scene.init = function () {
     this.wallMesh.position.z = -40;
     this.scene.add(this.wallMesh);
 
+    //ANIMATE
+
+    // https://stackoverflow.com/questions/32890425/initial-render-of-threejs-scene-doesnt-add-texture
+    THREE.DefaultLoadingManager.onLoad = function () {
+        this.canvas.dispatchEvent( new Event('meshVisible'));         
+        this.mesh.visible = true;
+        this.animate(); 
+    }.bind(this);
+
     //LOAD MESH
 
     this.loader = new THREE.JSONLoader();
-    this.texLoader = new THREE.TextureLoader;
+    //this.texLoader = new THREE.TextureLoader;
     
     this.loader.load( "model/russel.json.js", function(geo, mats) {
         this.mesh = new THREE.Mesh( geo, new THREE.MultiMaterial( mats ) );
-    
+        this.mesh.visible = false;
+
         this.container = new THREE.Object3D();
         this.scene.add(this.container);
         this.mesh.position.y = -250;
@@ -117,9 +128,11 @@ scene.init = function () {
 
         //Set eyelashes transparency
         //NOTE: Modify the supplied texture in photoshop. Add png material by hand in json file
-        this.mesh.material.materials[0].transparent = true; 
+        //this.mesh.material.materials[0].transparent = true; 
+        this.mesh.material.materials[0].visible = false;
 
-        this.canvas.dispatchEvent( new Event('meshReady'));          
+        this.canvas.dispatchEvent( new Event('meshReady'));         
+
     }.bind(this));
 
     //CLOCK
@@ -130,8 +143,8 @@ scene.init = function () {
  
     this.controls = new THREE.TrackballControls(this.camera, this.renderer.domElement);
     this.controls.rotateSpeed = 0.4;
-    this.controls.noZoom = false;
-    this.controls.noPan = false;
+    this.controls.noZoom = true;
+    this.controls.noPan = true;
     this.controls.staticMoving = false;
     this.controls.minDistance = 50;
     this.controls.maxDistance = 400;
@@ -139,30 +152,45 @@ scene.init = function () {
 
     //EVENT HANDLERS
 
-    this.canvas.addEventListener('meshReady', this.replaceFaceMaterial.bind(this) );
-    this.canvas.addEventListener('faceMaterialReady', this.addMorphingToMaterial.bind(this) );
-    this.canvas.addEventListener('faceMaterialReady', this.addDoubleSideToMaterial.bind(this) );
+    this.canvas.addEventListener('meshReady', this.replaceMaterials.bind(this) );
+    this.canvas.addEventListener('materialsReady', this.addMorphingToMaterial.bind(this) );
+    this.canvas.addEventListener('materialsReady', this.addDoubleSideToMaterial.bind(this) );
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
 
 
     //READ FILE
 
-    this.fs = require("fs");
     this.transformationData = [];
     this.dataReady = false;
     this.dataPointer = 0;
 
-    this.fs.readFile('./data.json.js', function read(err, data) {
-        if (err) {
-            throw err;
-        }
-        this.transformationData = JSON.parse(data);
+    $.getJSON( "./data.json.js", function(data) {
+        this.transformationData = data;
         this.dataReady = true;
-    }.bind(this));
+        this.canvas.dispatchEvent( new Event('transformationDataReady'));    
+    }.bind(this))
+    .fail(function() {
+        console.log( "transformation data error" );
+    })
 
-    //ANIMATE
+    // this.fs = require("fs");
+    // this.transformationData = [];
+    // this.dataReady = false;
+    // this.dataPointer = 0;
 
-    this.animate();
+    // this.fs.readFile('./data.json.js', function read(err, data) {
+    //     if (err) {
+    //         throw err;
+    //     }
+    //     this.transformationData = JSON.parse(data);
+    //     this.dataReady = true;
+    // }.bind(this));
+}
+
+scene.onWindowResize = function() {
+    scene.camera.aspect = window.innerWidth / window.innerHeight;
+    scene.camera.updateProjectionMatrix();
+    scene.renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 scene.applyMovementsFromFile = function() {
@@ -182,24 +210,62 @@ scene.applyMovementsFromFile = function() {
 //Convert the materials to phong
 //Add normal map to face and torso
 //Note that bump and normal map cannot be used at the same time
-scene.replaceFaceMaterial = function() {
-    // if (Object.keys(this.textures).length < 1)
-    //     return;
+scene.replaceMaterials = function() {
+
+    //REFLECTIONS
+
+    var path = "img/skybox/";
+    var format = '.jpg';
+    var urls = [
+            path + 'px' + format, path + 'nx' + format,
+            path + 'py' + format, path + 'ny' + format,
+            path + 'pz' + format, path + 'nz' + format
+        ];
+
+    reflectionCube = new THREE.CubeTextureLoader().load( urls );
+    reflectionCube.format = THREE.RGBFormat;
+
+    // EDIT MATERIALS
+
+    for (i = 0; i < this.mesh.material.materials.length; i++) {
+        this.mesh.material.materials[i].envMap = reflectionCube;
+        this.mesh.material.materials[i].reflectivity = 0.5;
+        shininess = 0;
+    }
+
+    //SET FACE MATERIAL
+
     this.mesh.material.materials[3] = new THREE.MeshPhongMaterial({ 
         map: faceMapScene.rendertarget.texture,
         normalMap: normalMapScene.rendertarget.texture,
         displacementMap: faceDistMapScene.rendertarget.texture,
         name: "Face",
         shininess: 0,
-        transparent: true
+        transparent: true,
+        envMap: reflectionCube,
+        reflectivity: 0.5
     });
-    this.canvas.dispatchEvent( new Event('faceMaterialReady'));
+    this.canvas.dispatchEvent( new Event('materialsReady'));
+
+    // EYE LASHES
+
+     // this.texLoader = new THREE.TextureLoader;
+     // this.texLoader.load('model/ryrussell_lashesiray_1006.png', function(tex) {
+     //     this.mesh.material.materials[0] = new THREE.MeshPhongMaterial({ 
+     //         //map: tex,
+     //         name: "Lashes",
+     //         shininess: 0,
+     //         //transparent: true,
+     //     });
+     // }.bind(this));
 }
 
 scene.addDoubleSideToMaterial = function() {
     this.mesh.material.materials.forEach( function (mat) {
         mat.side = THREE.DoubleSide;
     })
+
+    this.canvas.dispatchEvent( new Event('materialsFixed'));   
 }
 
 scene.addMorphingToMaterial = function() {
@@ -207,12 +273,6 @@ scene.addMorphingToMaterial = function() {
         mat.morphTargets = true;
         mat.needsUpdate = true;
     })
-}
-
-scene.onWindowResize = function() {
-    this.camera.aspect = this.canvas.width / this.canvas.height;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(this.canvas.width, this.canvas.height);
 }
 
 scene.animate = function() {
@@ -267,6 +327,7 @@ scene.animateWoof = function() {
         this.animLight8.intensity = 0.5 + currentSong.trackAnalyserData[23][12] / 255;
     } else if ($("a.simpleTrackToggle.__woof-__002b-clave").hasClass('down')) {
         this.animLight8.intensity = 0.5;
+        this.mesh.morphTargetInfluences[8] = 0;
     } else {
         this.animLight8.intensity = 0.0;
         this.mesh.morphTargetInfluences[8] = 0;
@@ -283,6 +344,7 @@ scene.animateShaker = function() {
         this.animLight7.intensity = 0.5 + currentSong.trackAnalyserData[20][15] / 255;
     } else if ($("a.simpleTrackToggle.__shaker-echo-__002b-clap").hasClass('down')){
         this.animLight7.intensity = 0.5;
+        THREE.alphaStripesShader.uniforms.thickness.value = 1.2;
     } else {
         this.animLight7.intensity = 0.0;        
         THREE.alphaStripesShader.uniforms.thickness.value = 1.2;
@@ -294,7 +356,7 @@ scene.animateLead = function() {
     if(!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__lead").hasClass('down')) {
-        this.animLight1.intensity = 0.2 + currentSong.trackAnalyserData[18][0] / 255 * 1 * Math.random();
+        this.animLight1.intensity = currentSong.trackAnalyserData[18][0] / 255 * 1 * Math.random();
         this.animLight1.position.x = currentSong.trackAnalyserData[18][0] * Math.sin(this.clock.getElapsedTime()*10) * 5 * Math.random();
         this.animLight1.position.y = currentSong.trackAnalyserData[18][0] * Math.cos(this.clock.getElapsedTime()*10) * 10 * Math.random();
     }
@@ -314,6 +376,7 @@ scene.animateSnare = function() {
         this.animLight6.intensity = 0.5 + currentSong.trackAnalyserData[21][12] / 255 * 2;
     } else if ($("a.simpleTrackToggle.__snare").hasClass('down')) {
         this.animLight6.intensity = 0.5;
+        this.mesh.morphTargetInfluences[6] = 0;
     } else {
         this.animLight6.intensity = 0.0;
         this.mesh.morphTargetInfluences[6] = 0;
@@ -328,6 +391,7 @@ scene.animateToms = function() {
         this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[22][0] / 255 * 3;
         this.animLight5.intensity = 0.5 + currentSong.trackAnalyserData[22][0] / 255 * 2;
     } else if ($("a.enableTrack.__toms").hasClass('down')) {
+        this.mesh.morphTargetInfluences[7] = 0;
         this.animLight5.intensity = 0.5;
     } else {
         this.mesh.morphTargetInfluences[7] = 0;
@@ -344,6 +408,7 @@ scene.animateBass = function() {
         faceMat.displacementScale = currentSong.trackAnalyserData[1][8] / 255 / 4;
         this.animLight4.intensity = 1 + currentSong.trackAnalyserData[1][8] / 255;
     } else if ($("a.enableTrack.__bass").hasClass('down')) {
+        faceMat.displacementScale = 0;
         this.animLight4.intensity = 1;
     } else {
         faceMat.displacementScale = 0;
@@ -357,12 +422,13 @@ scene.animateKicks = function() {
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__kicks").hasClass('down')) {
         this.mesh.morphTargetInfluences[5] = currentSong.trackAnalyserData[17][9] / 255 * 3;
-        this.directionalLight3.intensity = 0.5 + currentSong.trackAnalyserData[17][9] / 255;
+        this.directionalLight3.intensity = 0.3 + currentSong.trackAnalyserData[17][9] / 255;
     } else if ($("a.enableTrack.__kicks").hasClass('down')) {
-        this.directionalLight3.intensity = 0.5;
-    } else {
         this.mesh.morphTargetInfluences[5] = 0;
         this.directionalLight3.intensity = 0.3;
+    } else {
+        this.mesh.morphTargetInfluences[5] = 0;
+        this.directionalLight3.intensity = 0.0;
     }
 }
 
@@ -379,6 +445,9 @@ scene.animatePad = function() {
         faceMat.normalScale.y = faceMat.normalScale.x;
         this.animLight9.intensity = 1.0 + currentSong.trackAnalyserData[19][9] / 255;
     } else if ($("a.enableTrack.__pad").hasClass('down')) {
+        faceMat.shininess = 0;
+        faceMat.normalScale.x = 0; 
+        faceMat.normalScale.y = faceMat.normalScale.x;
         this.animLight9.intensity = 1.0;
     } else {
         faceMat.shininess = 0;

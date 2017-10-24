@@ -18,7 +18,6 @@ BufferLoader.prototype.loadBuffer = function (url, index, visibleIndex) {
   var loader = this;
 
   request.onload = function () {
-
     // Asynchronously decode the audio file data in request.response
     loader.context.decodeAudioData(
       request.response,
@@ -38,6 +37,9 @@ BufferLoader.prototype.loadBuffer = function (url, index, visibleIndex) {
         //console.log("In bufferLoader.onload bufferList size is " + loader.bufferList.length + " index =" + index);
         if (++loader.loadCount == loader.urlList.length)
           loader.onload(loader.bufferList);
+
+        //Send signal that a track has been loaded
+        $('#songs').trigger('oneTrackLoaded');
       },
       function (error) {
         console.error('decodeAudioData error', error);
@@ -48,9 +50,9 @@ BufferLoader.prototype.loadBuffer = function (url, index, visibleIndex) {
   request.onprogress = function (e) {
     // e.total - 100%
     // e.value - ?
+      console.log("index:" + index + " e.loaded: " + e.loaded + " of total " + e.total);
     if (e.total !== 0) {
       //var percent = (e.loaded * 100) / e.total;
-
       //console.log("loaded " + percent  + "of song " + index);
       var progress = document.querySelector("#progress" + index);
       if (progress != null) {
@@ -61,7 +63,9 @@ BufferLoader.prototype.loadBuffer = function (url, index, visibleIndex) {
   };
 
   request.onerror = function () {
-    alert('BufferLoader: XHR error');
+    //Vib change
+    //alert('BufferLoader: XHR error');
+    console.log('BufferLoader: XHR error');
   };
 
   request.send();
