@@ -323,8 +323,8 @@ scene.animateWoof = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__woof-__002b-clave").hasClass('down')) {
-        this.mesh.morphTargetInfluences[8] = currentSong.trackAnalyserData[23][12] / 255 * 2;
-        this.animLight8.intensity = 0.5 + currentSong.trackAnalyserData[23][12] / 255;
+        this.mesh.morphTargetInfluences[8] = currentSong.trackAnalyserData[15][12] / 255 * 2;
+        this.animLight8.intensity = 0.5 + currentSong.trackAnalyserData[15][12] / 255;
     } else if ($("a.simpleTrackToggle.__woof-__002b-clave").hasClass('down')) {
         this.animLight8.intensity = 0.5;
         this.mesh.morphTargetInfluences[8] = 0;
@@ -339,9 +339,9 @@ scene.animateShaker = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__shaker-echo-__002b-clap").hasClass('down')) {
-        THREE.alphaStripesShader.uniforms.thickness.value = 1.2 - currentSong.trackAnalyserData[20][15] / 255 / 2;
+        THREE.alphaStripesShader.uniforms.thickness.value = 1.2 - currentSong.trackAnalyserData[12][15] / 255 / 2;
         THREE.alphaStripesShader.uniforms.thickness.value = THREE.alphaStripesShader.uniforms.thickness.value < 0 ? 0 : THREE.alphaStripesShader.uniforms.thickness.value;
-        this.animLight7.intensity = 0.5 + currentSong.trackAnalyserData[20][15] / 255;
+        this.animLight7.intensity = 0.5 + currentSong.trackAnalyserData[12][15] / 255;
     } else if ($("a.simpleTrackToggle.__shaker-echo-__002b-clap").hasClass('down')){
         this.animLight7.intensity = 0.5;
         THREE.alphaStripesShader.uniforms.thickness.value = 1.2;
@@ -355,10 +355,10 @@ scene.animateShaker = function() {
 scene.animateLead = function() {
     if(!this.mesh)
         return;
-    if (currentSong && currentSong.isPlaying && $("a.enableTrack.__lead").hasClass('down')) {
-        this.animLight1.intensity = currentSong.trackAnalyserData[18][0] / 255 * 1 * Math.random();
-        this.animLight1.position.x = currentSong.trackAnalyserData[18][0] * Math.sin(this.clock.getElapsedTime()*10) * 5 * Math.random();
-        this.animLight1.position.y = currentSong.trackAnalyserData[18][0] * Math.cos(this.clock.getElapsedTime()*10) * 10 * Math.random();
+    if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__lead").hasClass('down')) {
+        this.animLight1.intensity = currentSong.trackAnalyserData[10][0] / 255 * 1 * Math.random();
+        this.animLight1.position.x = currentSong.trackAnalyserData[10][0] * Math.sin(this.clock.getElapsedTime()*10) * 5 * Math.random();
+        this.animLight1.position.y = currentSong.trackAnalyserData[10][0] * Math.cos(this.clock.getElapsedTime()*10) * 10 * Math.random();
     }
     else if ($("a.enableTrack.__lead").hasClass('down')) {
         this.animLight1.intensity = 0.2;
@@ -372,8 +372,8 @@ scene.animateSnare = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.simpleTrackToggle.__snare").hasClass('down')) {
-        this.mesh.morphTargetInfluences[6] = currentSong.trackAnalyserData[21][12] / 255 * 3;
-        this.animLight6.intensity = 0.5 + currentSong.trackAnalyserData[21][12] / 255 * 2;
+        this.mesh.morphTargetInfluences[6] = currentSong.trackAnalyserData[13][12] / 255 * 3;
+        this.animLight6.intensity = 0.5 + currentSong.trackAnalyserData[13][12] / 255 * 2;
     } else if ($("a.simpleTrackToggle.__snare").hasClass('down')) {
         this.animLight6.intensity = 0.5;
         this.mesh.morphTargetInfluences[6] = 0;
@@ -388,8 +388,8 @@ scene.animateToms = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__toms").hasClass('down')) {
-        this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[22][0] / 255 * 3;
-        this.animLight5.intensity = 0.5 + currentSong.trackAnalyserData[22][0] / 255 * 2;
+        this.mesh.morphTargetInfluences[7] = currentSong.trackAnalyserData[14][0] / 255 * 3;
+        this.animLight5.intensity = 0.5 + currentSong.trackAnalyserData[14][0] / 255 * 2;
     } else if ($("a.enableTrack.__toms").hasClass('down')) {
         this.mesh.morphTargetInfluences[7] = 0;
         this.animLight5.intensity = 0.5;
@@ -421,8 +421,8 @@ scene.animateKicks = function() {
     if (!this.mesh)
         return;
     if (currentSong && currentSong.isPlaying && $("a.enableTrack.__kicks").hasClass('down')) {
-        this.mesh.morphTargetInfluences[5] = currentSong.trackAnalyserData[17][9] / 255 * 3;
-        this.directionalLight3.intensity = 0.3 + currentSong.trackAnalyserData[17][9] / 255;
+        this.mesh.morphTargetInfluences[5] = currentSong.trackAnalyserData[8][9] / 255 * 3;
+        this.directionalLight3.intensity = 0.3 + currentSong.trackAnalyserData[8][9] / 255;
     } else if ($("a.enableTrack.__kicks").hasClass('down')) {
         this.mesh.morphTargetInfluences[5] = 0;
         this.directionalLight3.intensity = 0.3;
@@ -437,13 +437,13 @@ scene.animatePad = function() {
     if (!this.mesh)
         return;
     var faceMat = this.mesh.material.materials[3];
-    if (currentSong && currentSong.trackAnalyserData[19] && currentSong.isPlaying && $("a.enableTrack.__pad").hasClass('down')) {
+    if (currentSong && currentSong.trackAnalyserData[11] && currentSong.isPlaying && $("a.enableTrack.__pad").hasClass('down')) {
         //Animate the face material to the 'pad' track
-        faceMat.shininess = currentSong.trackAnalyserData[19][9] / 255 * 100 * 2;
-        faceMat.normalScale.x = currentSong.trackAnalyserData[19][9] / 255 * 4; 
+        faceMat.shininess = currentSong.trackAnalyserData[11][9] / 255 * 100 * 2;
+        faceMat.normalScale.x = currentSong.trackAnalyserData[11][9] / 255 * 4; 
         faceMat.normalScale.x = faceMat.normalScale.x < 0 ? 0 : faceMat.normalScale.x;
         faceMat.normalScale.y = faceMat.normalScale.x;
-        this.animLight9.intensity = 1.0 + currentSong.trackAnalyserData[19][9] / 255;
+        this.animLight9.intensity = 1.0 + currentSong.trackAnalyserData[11][9] / 255;
     } else if ($("a.enableTrack.__pad").hasClass('down')) {
         faceMat.shininess = 0;
         faceMat.normalScale.x = 0; 

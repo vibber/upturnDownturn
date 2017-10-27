@@ -4,6 +4,17 @@
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="chrome=1" />
         <title>Vibeke Bertelsen (Udart), Upturn/Downturn feat. Max Anxd</title>
+ 
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-51025809-4"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'UA-51025809-4');
+        </script>
+
         <ascript src="http://cwilso.github.io/AudioContext-MonkeyPatch/AudioContextMonkeyPatch.js"></ascript>
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery-ui.min.js"></script>
@@ -29,7 +40,16 @@
         <script src="js/range-touch.js"></script>
         <script src="js/recorderjs/recorder.js"></script>
 
-		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		    <link rel="stylesheet" type="text/css" href="css/style.css" />
+
+        <meta property="og:title" content="Upturn/Downturn" />
+        <meta property="og:site_name" content="udart.dk"/>
+        <meta property="og:url" content="http://www.udart.dk/upturndownturn"/>
+        <meta property="og:image:type" content="image/png">
+        <meta property="og:image" content="http://dev.udart.dk/valley-of-uncanny-01/img/og-img.png" />
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:description" content="An audio visual art experience" />
     </head>
     <body onload="init();">
 
@@ -41,7 +61,7 @@
                   <td id="modal-td">
                       <div id="modal-content">
                           <div id="modal-body">
-                            <p>Please wait while the music is loading. This will take a few minutes.</p>
+                            <p id="text">Please wait while the music is loading. This will take a few minutes.</p>
                             <p>Loading: <span id="progress">0/0</span></p>
                           </div>
                       </div>
@@ -65,6 +85,8 @@
       </div>
 
       <div id="disableClicks"></div>
+
+      <div id="sitelink"><a href="http://www.udart.dk" target="_blank">udart.dk</a></div>
      
     	<div id="app">
     		<div id="console">
@@ -172,6 +194,8 @@
         
 
 
-        
+      <!-- Go to www.addthis.com/dashboard to customize your tools -->
+      <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-536ccdfd11ef48ca"></script>
+
     </body>
 </html>

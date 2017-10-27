@@ -10,40 +10,59 @@
 //There are more mods in sound.js line 364: function loadSong
 
 //To-do:
-//Check in browsers
+//picture for 'og' tag
+//Hide addthis till loaded?
+//Message for mobile browsers
+//Create tumblr and instagram animations
+//Container div and see if it helps addthis bug
+//sphere instead of bg plane
 
-//Please turn up the sound
-//You can change the music and visuals by pressing the buttons in the control panel on the left
-//You can click the sound waves to jump to another part of the music.
-//You can also drag to change your angle of view
 
 
-
-var songList = ["upturn downturn qual 2"];
-var song = {"id":"upturn downturn qual 2","instruments":[{"name":"FX","sound":"FX.ogg"},{"name":"bass","sound":"bass.ogg"},{"name":"kicks&bass","sound":"kicks&bass.ogg"},{"name":"kicks&lead&bass","sound":"kicks&lead&bass.ogg"},{"name":"kicks&lead&pad&bass","sound":"kicks&lead&pad&bass.ogg"},{"name":"kicks&lead&pad&toms&bass","sound":"kicks&lead&pad&toms&bass.ogg"},{"name":"kicks&lead&pad&toms","sound":"kicks&lead&pad&toms.ogg"},{"name":"kicks&lead&pad","sound":"kicks&lead&pad.ogg"},{"name":"kicks&lead&toms&bass","sound":"kicks&lead&toms&bass.ogg"},{"name":"kicks&lead&toms","sound":"kicks&lead&toms.ogg"},{"name":"kicks&lead","sound":"kicks&lead.ogg"},{"name":"kicks&pad&bass","sound":"kicks&pad&bass.ogg"},{"name":"kicks&pad&toms&bass","sound":"kicks&pad&toms&bass.ogg"},{"name":"kicks&pad&toms","sound":"kicks&pad&toms.ogg"},{"name":"kicks&pad","sound":"kicks&pad.ogg"},{"name":"kicks&toms&bass","sound":"kicks&toms&bass.ogg"},{"name":"kicks&toms","sound":"kicks&toms.ogg"},{"name":"kicks","sound":"kicks.ogg"},{"name":"lead","sound":"lead.ogg"},{"name":"pad","sound":"pad.ogg"},{"name":"shaker echo + clap","sound":"shaker echo + clap.ogg"},{"name":"snare","sound":"snare.ogg"},{"name":"toms","sound":"toms.ogg"},{"name":"woof + clave","sound":"woof + clave.ogg"}]}
+var songList = ["new mp3"];
+var song = {"id":"new mp3","instruments":[
+    {"name":"FX","sound":"FX.mp3"},
+    {"name":"bass","sound":"bass.mp3"},
+    {"name":"kicks&bass","sound":"kicks&bass.mp3"},
+    {"name":"kicks&pad&bass","sound":"kicks&pad&bass.mp3"},
+    {"name":"kicks&pad&toms&bass","sound":"kicks&pad&toms&bass.mp3"},
+    {"name":"kicks&pad&toms","sound":"kicks&pad&toms.mp3"},
+    {"name":"kicks&pad","sound":"kicks&pad.mp3"},
+    {"name":"kicks&toms&bass","sound":"kicks&toms&bass.mp3"},
+    {"name":"kicks&toms","sound":"kicks&toms.mp3"},
+    {"name":"kicks","sound":"kicks.mp3"},
+    {"name":"lead","sound":"lead.mp3"},
+    {"name":"pad","sound":"pad.mp3"},
+    {"name":"shaker echo + clap","sound":"shaker echo + clap.mp3"},
+    {"name":"snare","sound":"snare.mp3"},
+    {"name":"toms","sound":"toms.mp3"},
+    {"name":"woof + clave","sound":"woof + clave.mp3"}
+]}
 
 //////////////////////////////////////
 
 var hideTracks = true; //Can be turned off for debugging
 
 //These are the names of the special elements that affect multiple tracks
-var specialElements = [ 'bass', 'toms', 'pad', 'kicks', 'lead'];
+var specialElements = [ 'bass', 'toms', 'pad', 'kicks'];
 
 //Counts the progress of loading displayed in the modal window
 var modalCounter = 0;
 
 var modalMessages = [
     'Please wait while the music is loading. This will take a few minutes.',
-    'We know it takes quite some time. Thank you for your patience',
     'Please turn on sound',
     'Change the music and visuals by pressing the buttons in the control panel',
-    'You can click the sound waves to jump to another part of the song',
+    'Thank you for your patience',
+    'Click the sound waves to jump to another part of the song',
 ]
 
 /////////////////////////////////////
 $(document).ready(function(){
 
     initDisableClicks();
+
+    loopModalTexts();
 
     moveWaveCanvas();
 
@@ -75,6 +94,17 @@ $(document).ready(function(){
 
 ////////////////////////////////////
 
+function loopModalTexts() {    
+    var i = 0;
+    modalInterval = setInterval(function(){ 
+        var msg = modalMessages[i];
+        $("#modal-body #text").text(msg)
+        i++;
+        if (i ==  modalMessages.length)
+            i = 0;
+    }, 4000);
+}
+
 // Create a timer that sends an event after a given interval. This is because we don't have a 
 // progress event when waiting for the tracks to be decoded
 // so we simply use a timer in order to give people the impression that the loading is working
@@ -91,7 +121,7 @@ function hideDisableClicks() {
 
 // A div taht prevents clicks while page is loading
 function initDisableClicks() {
-    $("#disableClicks").click(function() { alert('Please wait until the page has done loading')});
+    $("#disableClicks").click(function() { alert('Please wait until the page is done loading')});
     $("#disableClicks").width(window.innerWidth);
     $("#disableClicks").height(window.innerHeight);    
 }
@@ -107,6 +137,7 @@ function updateModalCounter() {
 }
 
 function hideModal() {
+    clearInterval(modalInterval);
     $("#modal").hide();
 }
 
